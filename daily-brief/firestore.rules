@@ -1,0 +1,11 @@
+rules_version = '2';
+
+service cloud.firestore {
+  match /databases/{database}/documents {
+    // Single-user app (Michelle). Anyone signed in via Firebase Auth is
+    // treated as the app's one user — no per-user data partitioning needed.
+    match /briefRules/{ruleId} {
+      allow read, write: if request.auth != null;
+    }
+  }
+}
