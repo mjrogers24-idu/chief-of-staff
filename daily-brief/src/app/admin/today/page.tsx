@@ -2,12 +2,24 @@
 
 import { useEffect, useState } from "react";
 import { subscribeDailyBrief, todayDateKey, type DailyBriefDoc } from "@/lib/firestore/dailyBriefs";
+import { currentWeekStart, mealForDate, subscribeMealPlan, type MealDay, type MealPlanDoc } from "@/lib/firestore/mealPlans";
+import { subscribeOpenTasks, type OpenTask } from "@/lib/firestore/openTasks";
 import { TodayBriefCard } from "@/components/brief/TodayBriefCard";
 
 export default function TodayPage() {
   const [brief, setBrief] = useState<DailyBriefDoc | null>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
+
+  // dailyIngestion only bakes dailyBriefs once a day, so a same-day edit to
+  // the meal plan or task list wouldn't otherwise show up here until the
+  // next run. These two pieces are cheap to subscribe to directly, so they
+  // override the cached snapshot live; the rest (weather/prep-ahead/travel/
+  // schedule) genuinely need the ingestion job's own data (calendar fetch,
+  // tomorrow's brief) and aren't duplicated here.
+  const [mealPlan, setMealPlan] = useState<MealPlanDoc | null>(null);
+  const [mealPlanLoaded, setMealPlanLoaded] = useState(false);
+  const [openTasks, setOpenTasks] = useState<OpenTask[] | null>(null);
 
   useEffect(() => {
     return subscribeDailyBrief(
@@ -23,5 +35,36 @@ export default function TodayPage() {
     );
   }, []);
 
-  return <TodayBriefCard brief={brief} loading={loading} error={error} />;
+  useEffect(() => {
+    return subscribeMealPlan(
+      currentWeekStart(),
+      (data) => {
+        setMealPlan(data);
+        setMealPlanLoaded(true);
+      },
+      () => setMealPlanLoaded(true),
+    );
+  }, []);
+
+  useEffect(() => {
+    return subscribeOpenTasks(
+      (tasks) => setOpenTasks(tasks),
+      () => setOpenTasks(null),
+    );
+  }, []);
+
+  const liveDinner: MealDay | null | undefined = mealPlanLoaded
+    ? mealForDate(mealPlan, new Date())
+    : undefined;
+  const liveOpenTasks = openTasks
+    ?.filter((t) => !t.done)
+    .map((t) => ({ id: t.id, title: t.title, dueDate: t.dueDate }));
+
+  const displayBrief: DailyBriefDoc | null = brief && {
+    ...brief,
+    ...(liveDinner !== undefined ? { dinnerTonight: liveDinner } : {}),
+    ...(liveOpenTasks ? { openTasks: liveOpenTasks } : {}),
+  };
+
+  return <TodayBriefCard brief={displayBrief} loading={loading} error={error} />;
 }

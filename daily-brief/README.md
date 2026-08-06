@@ -45,7 +45,7 @@ In `/admin/tasks`, track outstanding forms/paperwork with an optional due date; 
 - `src/lib/calendarUpload.ts` — uploads a calendar file to Storage, then triggers `parseCalendarUpload`
 - `src/lib/auth-context.tsx` — auth state provider
 - `src/app/login` — email/password sign-in
-- `src/app/admin/today` — the "Today's Brief" dashboard card (weather/prep-ahead/travel highlights, schedule, prep reminders, and outstanding forms for today), the app's home view after sign-in
+- `src/app/admin/today` — the "Today's Brief" dashboard card (weather/prep-ahead/travel highlights, schedule, prep reminders, and outstanding forms for today), the app's home view after sign-in. `dinnerTonight` and `openTasks` are live-overridden from `mealPlans`/`openTasks` on top of the cached `dailyBriefs` snapshot, so same-day edits show up immediately instead of waiting for the next `dailyIngestion` run — the rest of the brief (weather, schedule, prep-ahead, travel) only updates when ingestion re-runs, since it depends on data (calendar fetch, tomorrow's brief) that isn't cheap to duplicate client-side
 - `src/app/admin/rules` — rules admin table (add/edit/delete, seed starter rules when empty)
 - `src/app/admin/schedule` — recurring schedule admin table, plus a "brief preview" panel showing what today/tomorrow would flag
 - `src/app/admin/calendars` — connect/disconnect Michelle's and Dan's Google Calendars

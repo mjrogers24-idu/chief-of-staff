@@ -57,6 +57,16 @@ export function currentWeekStart(date: Date = new Date()): string {
   return monday.toISOString().slice(0, 10);
 }
 
+const WEEKDAY_BY_JS_DAY: (MealPlanWeekday | null)[] = [null, "Mon", "Tue", "Wed", "Thu", "Fri", null];
+
+/** This week's planned dinner for a given date, if one exists (weekends have none). */
+export function mealForDate(plan: MealPlanDoc | null, date: Date): MealDay | null {
+  if (!plan) return null;
+  const label = WEEKDAY_BY_JS_DAY[date.getDay()];
+  if (!label) return null;
+  return plan.days.find((d) => d.day === label) ?? null;
+}
+
 export function subscribeMealPlan(
   weekStart: string,
   onChange: (plan: MealPlanDoc | null) => void,
