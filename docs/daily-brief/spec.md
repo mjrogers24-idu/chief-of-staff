@@ -8,26 +8,45 @@ A standalone app that generates a "Daily Brief" each morning: pulls in school/ac
 
 ## 2. Suggested Stack (matches your existing patterns, but a fresh project)
 - Next.js 14, Firebase Hosting (or App Hosting)
-- Firebase Auth + Firestore (new project, not the Family Command Center Firebase instance)
-- Google Calendar API — read access to relevant calendar(s), OR manually-entered recurring school/activity schedules (decide in section 5)
-- Gmail API (for email delivery)
-- Gemini API (for the nutritionist agent)
+- Firebase Auth + Firestore (new project, not the Family Command Center Firebase instance) — single user (Michelle); Dan is a connected data source, not a login
+- Google Calendar API — read-only pull for one-off/dated events (practices, field trips, appointments) from both parents' calendars
+- Gmail API (for email delivery; inbox scanning deferred, see 3.1a)
+- Gemini API (for the nutritionist agent, and for parsing uploaded daycare calendars, see 3.0.1)
 - New visual identity — doesn't need to match Family Command Center's cream/terracotta look unless you want it to
 
 ## 3. New Components
 
 ### 3.0 Where Schedule Data Lives
-Since this app owns the school/activity-specific details, it needs its own place to store recurring weekly schedules — separate from any Google Calendar pull. Two layers of data feed the brief:
-1. **Recurring weekly schedule** (new, lives only in this app) — e.g. "Milo has gym every Tue/Thu," "lunch is at 11:40," "specials rotation: art/music/PE." Stored in Firestore, entered once and repeats.
-2. **One-off/dated events** (practices, field trips, appointments) — either entered directly in this app, or pulled read-only from Google Calendar if you'd rather not double-enter. *(Decide in section 5.)*
+Since this app owns the school/activity-specific details, it needs its own place to store recurring weekly schedules — separate from any Google Calendar pull. Three layers of data feed the brief:
+1. **Recurring weekly schedule** (new, lives only in this app) — e.g. "Josh has PE Mon/Thu," "lunch is at 11:40," "specials rotation: art/music/PE." Stored in Firestore, entered once and repeats. See 3.0.2 for initial data.
+2. **One-off/dated events** (practices, field trips, appointments) — pulled read-only from Google Calendar (both parents'). **Decided:** no double-entry; the app reads from Google Calendar rather than maintaining its own one-off event entry UI.
+3. **Uploaded monthly calendars** (Jake / daycare) — see 3.0.1. Daycare sends a monthly calendar image/PDF rather than a recurring weekly pattern (e.g. random dress-up days), so it needs its own ingestion path distinct from 1 and 2.
+
+### 3.0.1 Monthly Calendar Upload & Parsing (Jake / daycare)
+Daycare dress-up days and similar flagged days don't follow a weekly recurrence — they come from a monthly calendar Michelle receives as an image or PDF. **Decided:** auto-parse with Gemini vision rather than manual re-entry.
+- Simple upload UI (drag/drop image or PDF, tagged to a kid — currently just Jake — and a month)
+- On upload, Gemini vision reads the calendar image and extracts dated events (e.g. "Oct 14 — crazy hair day," "Oct 22 — field trip") as structured JSON
+- Extracted events are written into the same one-off dated-events store as the Google Calendar pull (tagged `source: "uploaded-calendar"` so they're distinguishable/re-editable if parsing gets something wrong)
+- Michelle gets a quick review/confirm step after parsing before events go live in the brief, since OCR/vision parsing of a daycare calendar graphic is the least reliable data source in the pipeline
+- Re-upload for a given kid+month replaces previously parsed events for that month (avoids duplicates when a calendar gets revised)
+
+### 3.0.2 Initial Recurring Weekly Schedule (starter data)
+What's known so far, to seed the recurring-schedule collection at build time. Gaps get filled in as they're figured out — this doesn't need to be complete before building.
+
+| Kid | Recurring pattern | Source |
+|---|---|---|
+| Josh | PE: Monday, Thursday | Known |
+| Riley | PE: Tuesday, Thursday | Known |
+| Maddie | *(TBD)* | Not yet known |
+| Jake | No fixed weekly pattern — daycare dress-up/special days vary month to month | Handled via monthly calendar upload, see 3.0.1, not the recurring-schedule collection |
+
+Lunch times and specials rotation (art/music/PE cycle) for Josh, Riley, and Maddie are still open — add as they're gathered; the schema (3.0) supports adding fields per kid incrementally rather than requiring a fixed set upfront.
 
 ### 3.1a Multi-Account Google Integration
 - Read-only access to **both** Michelle's and Dan's Google Calendars — each requires its own OAuth consent flow and stored refresh token (two separate Google account connections, not one)
 - Events merged into a single daily view, tagged by which parent's calendar they came from (useful for the travel/away-parent flag)
-- **Gmail scanning** — read-only access to one or both inboxes, filtered for "important" school/activity emails (forms, camp notices, field trip permission slips, schedule changes). Needs a defined scope so it doesn't surface everyday email noise:
-  - Option A: keyword/sender rules (e.g. emails from school domains, subject contains "permission," "form," "field trip")
-  - Option B: Gemini classifies each new email as brief-worthy or not
-  - Flagged emails surface in the "Forms & Outstanding" section of the brief, same as the manual open-tasks tracker
+- **Decided:** Dan is a read-only data source only (calendar + eventually email feed the brief); he does not get his own login or dashboard view. Single-user Firebase Auth (Michelle) is sufficient for v1.
+- **Gmail scanning** — deferred out of v1. **Decided:** skip inbox scanning for "important" school/activity emails (forms, camp notices, permission slips) in the initial build; revisit as a later phase once the core brief (schedule + rules + nutritionist + delivery) is working. The `openTasks` manual tracker (3.4) covers forms/outstanding items in the meantime.
 
 ### 3.1 Rules Engine (Firestore collection: `briefRules`)
 Simple keyword → action mapping that Michelle maintains manually (not derived from calendar event structure).
@@ -42,6 +61,16 @@ Example schema:
 }
 ```
 Needs a simple admin UI (even a basic table with add/edit/delete) so Michelle isn't editing Firestore by hand.
+
+**Starter rules** (seed data — expand over time as more activities/kids are known):
+| keyword | kid | wearNote | dinnerFlag |
+|---|---|---|---|
+| PE | Josh | sneakers, athletic clothes | null |
+| PE | Riley | sneakers, athletic clothes | null |
+| field trip | *(any)* | check permission slip / packed lunch | null |
+| dress-up day | Jake | per that month's daycare calendar theme (see 3.0.1) | null |
+
+Maddie and Jake's PE/specials-based rules aren't set yet — added once 3.0.2's gaps are filled in (Maddie's schedule) or as monthly calendars come in (Jake).
 
 ### 3.2 Daily Ingestion
 - Scheduled Cloud Function, runs early each morning (e.g. 5:00 AM)
@@ -124,18 +153,25 @@ Output valid JSON only, in this shape:
 **Cloud Function logic**: query Firestore for recent meal history + this week's busy-night flags from the rules engine → interpolate into the template above → call Gemini → parse JSON response → save to Firestore (both as this week's plan and appended to meal history for future dedup) → include in the daily brief.
 
 ## 4. Suggested Build Order
-1. `briefRules` Firestore schema + basic admin table UI
-2. Calendar ingestion Cloud Function + rule matching logic
+1. `briefRules` Firestore schema + basic admin table UI (seed with starter rules from 3.1)
+2. Recurring weekly schedule collection (seed with 3.0.2 data) + Google Calendar ingestion Cloud Function (both parents, read-only) + rule matching logic
 3. Dashboard "Today's Brief" card (static content first, wire to real data second)
 4. Email delivery via Gmail API
 5. Nutritionist agent (once dietary/household inputs are provided)
-6. Extras: weather, forms tracker, prep-ahead flags, travel flag
+6. Monthly calendar upload + Gemini vision parsing (Jake / daycare)
+7. Extras: weather, forms tracker, prep-ahead flags, travel flag
+8. *(Later phase, not v1)* Gmail inbox scanning for forms/permission slips
 
-## 5. Open Inputs Needed Before Full Build
+## 5. Open Inputs — Resolved
 - [x] ~~Family dietary preferences/restrictions~~ — see section 3.4 (no allergies; build-your-own style; kid vs. adult versions)
 - [x] ~~Household size / favorites~~ — see section 3.4
-- [ ] Should one-off events (practices, field trips) live only in this app, or pull read-only from Google Calendar?
-- [ ] Gmail scanning scope: which sender domains / keyword rules count as "important," or should Gemini classify emails instead?
-- [ ] Does Dan need his own login/view, or just his calendar/email as a read-only data source?
-- [ ] Initial recurring weekly schedule per kid (gym days, lunch times, specials)
-- [ ] Initial `briefRules` list (which kid, which activities, what prep notes)
+- [x] ~~One-off events source~~ — pull read-only from Google Calendar, no in-app double-entry (3.0)
+- [x] ~~Gmail scanning scope~~ — deferred out of v1 entirely; revisit as a later phase (3.1a)
+- [x] ~~Dan's access level~~ — read-only data source (calendar) only, no separate login/dashboard (3.1a)
+- [x] ~~Initial recurring weekly schedule~~ — Josh: PE Mon/Thu; Riley: PE Tue/Thu; Maddie: TBD; Jake: no fixed pattern, handled via monthly calendar upload instead (3.0.2)
+- [x] ~~Initial `briefRules` list~~ — starter rules seeded for Josh/Riley PE days, field trips, and Jake's dress-up days (3.1)
+
+### Still open (non-blocking, fill in as available)
+- [ ] Maddie's recurring weekly schedule (gym/PE day, lunch time, specials rotation)
+- [ ] Lunch times and specials rotation for Josh and Riley
+- [ ] First monthly daycare calendar upload for Jake, to validate the Gemini vision parsing approach (3.0.1)
