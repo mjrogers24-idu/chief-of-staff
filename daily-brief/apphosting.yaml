@@ -31,12 +31,11 @@ env:
     value: "1:1052531140945:web:30bb8471780c57d1cf0b70"
     availability: [BUILD, RUNTIME]
 
-  # Non-secret, but not knowable until the backend exists (the URL depends
-  # on the backend ID chosen during setup). TODO: fill in with the real
-  # assigned URL, then also add "<this>/api/google/callback" to the OAuth
-  # client's authorized redirect URIs in Google Cloud Console.
+  # Backend "chief-of-staff", assigned once the App Hosting backend was
+  # created. "<this>/api/google/callback" also needs to be added to the
+  # OAuth client's authorized redirect URIs in Google Cloud Console.
   - variable: GOOGLE_OAUTH_REDIRECT_BASE_URL
-    value: "https://REPLACE-WITH-APP-HOSTING-URL"
+    value: "https://chief-of-staff--daily-brief-b4383.us-east4.hosted.app"
     availability: [RUNTIME]
 
   # Secrets — stored in Google Secret Manager, referenced by name here.
