@@ -24,7 +24,7 @@ Note on item 3: the spec (3.5) also wants this card on the *Family Command Cente
 
 Once both calendars are connected and there's at least one `briefRules`/`recurringSchedule` entry, `dailyIngestion` runs automatically every morning at 5am (family timezone), writes `dailyBriefs/{date}` docs, and — once Michelle has granted `gmail.send` — emails that day's brief to every connected parent's address. If Michelle hasn't granted that scope yet (e.g. she connected before this feature existed and hasn't reconnected), the job logs and skips the email rather than failing the whole run. Trigger it manually to test: `firebase functions:shell` → `dailyIngestion()`, or via the Firebase console's "Run now" on the scheduled function.
 
-In `/admin/meals`, click "Generate this week's plan" to call the `generateMealPlan` Cloud Function directly (no schedule — grocery shopping is downstream of this, so it's a manual/reviewable action rather than a silent weekly job).
+In `/admin/meals`, click "Generate this week's plan" to call the `generateMealPlan` Cloud Function directly (no schedule — grocery shopping is downstream of this, so it's a manual/reviewable action rather than a silent weekly job). "Add a dinner" and each day's Edit/Delete are a manual fallback for when you'd rather fill a night in yourself than wait on/debug Gemini — they write straight to Firestore, no Cloud Function involved.
 
 In `/admin/daycare`, upload Jake's monthly daycare calendar (image or PDF) to have Gemini vision parse dress-up days and other flagged days into events — they land unconfirmed for review; only confirmed ones feed into `dailyIngestion`/`generateMealPlan`. Re-uploading for the same kid+month replaces whatever was parsed there before.
 
@@ -49,11 +49,11 @@ In `/admin/tasks`, track outstanding forms/paperwork with an optional due date; 
 - `src/app/admin/rules` — rules admin table (add/edit/delete, seed starter rules when empty)
 - `src/app/admin/schedule` — recurring schedule admin table, plus a "brief preview" panel showing what today/tomorrow would flag
 - `src/app/admin/calendars` — connect/disconnect Michelle's and Dan's Google Calendars
-- `src/app/admin/meals` — this week's dinner plan + grocery list, with a manual "generate" trigger
+- `src/app/admin/meals` — this week's dinner plan + grocery list; a "generate" trigger (Gemini) and manual add/edit/delete per dinner (direct Firestore writes, no Cloud Function)
 - `src/app/admin/daycare` — upload Jake's monthly daycare calendar; review/edit/confirm the parsed events
 - `src/app/admin/tasks` — the forms/paperwork tracker (add/edit/delete, mark done)
 - `src/app/api/google/*` — server routes for the OAuth connect flow (`connect-url`, `callback`, `status`, `disconnect`)
-- `firestore.rules` — `briefRules`/`recurringSchedule`/`uploadedEvents`/`openTasks` readable/writable by the signed-in user; `googleAccounts` (OAuth refresh tokens) is server-only; `dailyBriefs`/`mealPlans` are server-write/client-read
+- `firestore.rules` — `briefRules`/`recurringSchedule`/`uploadedEvents`/`openTasks`/`mealPlans` readable/writable by the signed-in user; `googleAccounts` (OAuth refresh tokens) is server-only; `dailyBriefs` is server-write/client-read
 - `storage.rules` — `daycare-calendars/**` readable/writable by the signed-in user (parsing itself happens server-side via the Admin SDK)
 - `functions/` — separate Node project (Firebase Functions v2, its own `package.json`/deploy).
   - `dailyIngestion` runs on a 5am schedule: pulls the recurring schedule, both parents' Google Calendars, confirmed `uploadedEvents`, open `openTasks`, and this week's `mealPlans` doc for today + next 2 days, runs the rule-matching logic (mirrored from `src/lib/ruleMatcher.ts` since this deploys independently of the Next app), composes the extras (`extras.ts`: weather note from `weather.ts`'s Open-Meteo fetch, a prep-ahead-tonight note when tomorrow's brief has a dinner-flagged action, a travel/away-parent note from calendar events matching a "travel" keyword, and that date's planned dinner via `mealPlan.ts`'s `mealForDate`), writes `dailyBriefs/{date}`, and emails today's full brief (`emailBrief.ts`, using Michelle's `gmail.send`-scoped refresh token) to every connected parent.

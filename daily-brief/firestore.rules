@@ -21,11 +21,12 @@ service cloud.firestore {
       allow read: if request.auth != null;
       allow write: if false;
     }
-    // Written only by the generateMealPlan callable Cloud Function
-    // (Admin SDK, bypasses these rules); the meals page reads it.
+    // Written by the generateMealPlan callable Cloud Function (Admin SDK,
+    // bypasses these rules) — and also directly by Michelle from
+    // /admin/meals for manual add/edit/delete of individual dinners, same
+    // client-managed pattern as briefRules/recurringSchedule.
     match /mealPlans/{weekStart} {
-      allow read: if request.auth != null;
-      allow write: if false;
+      allow read, write: if request.auth != null;
     }
     // Initially written by the parseCalendarUpload callable (Admin SDK)
     // as unconfirmed events; Michelle edits/confirms/deletes them
