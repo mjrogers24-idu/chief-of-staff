@@ -8,6 +8,7 @@ import { auth } from "@/lib/firebase";
 import { useAuth } from "@/lib/auth-context";
 
 const NAV = [
+  { href: "/admin/today", label: "Today" },
   { href: "/admin/rules", label: "Rules" },
   { href: "/admin/schedule", label: "Schedule" },
   { href: "/admin/calendars", label: "Calendars" },

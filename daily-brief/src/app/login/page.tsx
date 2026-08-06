@@ -15,7 +15,7 @@ export default function LoginPage() {
   const [submitting, setSubmitting] = useState(false);
 
   useEffect(() => {
-    if (!loading && user) router.replace("/admin/rules");
+    if (!loading && user) router.replace("/admin/today");
   }, [loading, user, router]);
 
   async function handleSubmit(e: FormEvent) {
@@ -24,7 +24,7 @@ export default function LoginPage() {
     setSubmitting(true);
     try {
       await signInWithEmailAndPassword(auth, email, password);
-      router.replace("/admin/rules");
+      router.replace("/admin/today");
     } catch {
       setError("Couldn't sign in. Check the email and password and try again.");
     } finally {

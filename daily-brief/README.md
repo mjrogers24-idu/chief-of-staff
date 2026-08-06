@@ -2,7 +2,9 @@
 
 Standalone morning family brief app. See [`../docs/daily-brief/spec.md`](../docs/daily-brief/spec.md) for the full project spec.
 
-Build order progress: item 1 (`briefRules` schema + admin UI) and item 2 (recurring schedule, Google Calendar connection, rule matching, and the scheduled ingestion Cloud Function) are scaffolded. Item 3 (dashboard "Today's Brief" card) is next.
+Build order progress: item 1 (`briefRules` schema + admin UI), item 2 (recurring schedule, Google Calendar connection, rule matching, and the scheduled ingestion Cloud Function), and item 3 (the "Today's Brief" dashboard view, within this app) are scaffolded. Item 4 (email delivery) is next.
+
+Note on item 3: the spec (3.5) also wants this card on the *Family Command Center* app's homepage — that's a separate codebase not available in this repo/session, so it's out of scope here. `/admin/today` is the Daily Brief app's own equivalent; the same `dailyBriefs/{date}` read could be reused to build the Family Command Center card later.
 
 ## Setup
 
@@ -30,8 +32,10 @@ Once both calendars are connected and there's at least one `briefRules`/`recurri
 - `src/lib/firestore/recurringSchedule.ts` — recurring weekly schedule schema, CRUD helpers, starter data, and date-matching helpers
 - `src/lib/ruleMatcher.ts` — pure keyword → action matching logic (unit-tested in `ruleMatcher.test.ts`)
 - `src/lib/googleOAuth.ts` — Google OAuth client + signed-state helpers for the Calendar connect flow
+- `src/lib/firestore/dailyBriefs.ts` — read-only access to `dailyBriefs/{date}`, written by the ingestion Cloud Function
 - `src/lib/auth-context.tsx` — auth state provider
 - `src/app/login` — email/password sign-in
+- `src/app/admin/today` — the "Today's Brief" dashboard card (schedule + prep reminders for today), the app's home view after sign-in
 - `src/app/admin/rules` — rules admin table (add/edit/delete, seed starter rules when empty)
 - `src/app/admin/schedule` — recurring schedule admin table, plus a "brief preview" panel showing what today/tomorrow would flag
 - `src/app/admin/calendars` — connect/disconnect Michelle's and Dan's Google Calendars
@@ -43,4 +47,4 @@ Everything under `/admin` is client-rendered and auth-gated; there's no public d
 
 ## Not yet built
 
-Per the spec's build order: the dashboard card, email delivery, the nutritionist agent, and the extras (weather, forms tracker, prep-ahead flags, travel flag). The Jake daycare-calendar upload (spec 3.0.1) also isn't wired into `dailyIngestion` yet — it's a separate later build-order item.
+Per the spec's build order: email delivery, the nutritionist agent, and the extras (weather, forms tracker, prep-ahead flags, travel flag). The Jake daycare-calendar upload (spec 3.0.1) also isn't wired into `dailyIngestion` yet — it's a separate later build-order item. The Family Command Center homepage card (spec 3.5) needs that other app's codebase.
