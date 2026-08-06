@@ -2,7 +2,8 @@ import { initializeApp } from "firebase-admin/app";
 import { getFirestore } from "firebase-admin/firestore";
 import { logger } from "firebase-functions";
 import { onSchedule } from "firebase-functions/v2/scheduler";
-import { addDays, assembleDailyBrief } from "./dailyIngestion";
+import { addDays, assembleDailyBrief, type DailyBrief } from "./dailyIngestion";
+import { composeBriefEmail, GMAIL_SEND_SCOPE, sendBriefEmail } from "./emailBrief";
 import { fetchMergedCalendarEvents, type GoogleAccount, type Parent } from "./googleCalendar";
 import type { RecurringScheduleItem } from "./recurringSchedule";
 import type { RuleLike } from "./ruleMatcher";
@@ -16,6 +17,35 @@ const TIMEZONE = "America/New_York";
 
 /** How many days ahead (inclusive of today) to ingest, per spec 3.2. */
 const DAYS_AHEAD = 3;
+
+interface StoredAccount extends GoogleAccount {
+  email: string | null;
+  scope: string | null;
+}
+
+async function sendTodaysBriefEmail(accounts: StoredAccount[], brief: DailyBrief): Promise<void> {
+  const sender = accounts.find(
+    (a) => a.parent === "michelle" && (a.scope ?? "").includes(GMAIL_SEND_SCOPE),
+  );
+  if (!sender) {
+    logger.info("Skipping brief email: Michelle hasn't granted gmail.send yet.");
+    return;
+  }
+
+  const recipients = [...new Set(accounts.map((a) => a.email).filter((e): e is string => !!e))];
+  if (recipients.length === 0) {
+    logger.info("Skipping brief email: no connected account has a known email address.");
+    return;
+  }
+
+  try {
+    const content = composeBriefEmail(brief);
+    await sendBriefEmail(sender.refreshToken, recipients, sender.email, content);
+    logger.info(`Sent brief email to ${recipients.join(", ")}`);
+  } catch (error) {
+    logger.error("Failed to send brief email", error);
+  }
+}
 
 export const dailyIngestion = onSchedule(
   { schedule: "0 5 * * *", timeZone: TIMEZONE },
@@ -51,10 +81,15 @@ export const dailyIngestion = onSchedule(
       };
     });
 
-    const accounts: GoogleAccount[] = accountsSnap.docs.map((doc) => ({
-      parent: doc.id as Parent,
-      refreshToken: doc.data().refreshToken,
-    }));
+    const accounts: StoredAccount[] = accountsSnap.docs.map((doc) => {
+      const data = doc.data();
+      return {
+        parent: doc.id as Parent,
+        refreshToken: data.refreshToken,
+        email: data.email ?? null,
+        scope: data.scope ?? null,
+      };
+    });
 
     const calendarEvents = await fetchMergedCalendarEvents(
       accounts,
@@ -63,19 +98,19 @@ export const dailyIngestion = onSchedule(
       (account, error) => logger.error(`Calendar fetch failed for ${account.parent}`, error),
     );
 
+    const briefs = dates.map((date) => assembleDailyBrief(date, recurringItems, calendarEvents, rules));
+
     await Promise.all(
-      dates.map(async (date) => {
-        const brief = assembleDailyBrief(date, recurringItems, calendarEvents, rules);
-        await db
+      briefs.map((brief) =>
+        db
           .collection("dailyBriefs")
           .doc(brief.date)
-          .set({
-            ...brief,
-            generatedAt: new Date().toISOString(),
-          });
-      }),
+          .set({ ...brief, generatedAt: new Date().toISOString() }),
+      ),
     );
 
-    logger.info(`Daily ingestion wrote briefs for ${dates.map((d) => d.toISOString().slice(0, 10)).join(", ")}`);
+    logger.info(`Daily ingestion wrote briefs for ${briefs.map((b) => b.date).join(", ")}`);
+
+    await sendTodaysBriefEmail(accounts, briefs[0]);
   },
 );

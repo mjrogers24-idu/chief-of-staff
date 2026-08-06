@@ -2,7 +2,7 @@
 
 Standalone morning family brief app. See [`../docs/daily-brief/spec.md`](../docs/daily-brief/spec.md) for the full project spec.
 
-Build order progress: item 1 (`briefRules` schema + admin UI), item 2 (recurring schedule, Google Calendar connection, rule matching, and the scheduled ingestion Cloud Function), and item 3 (the "Today's Brief" dashboard view, within this app) are scaffolded. Item 4 (email delivery) is next.
+Build order progress: item 1 (`briefRules` schema + admin UI), item 2 (recurring schedule, Google Calendar connection, rule matching, and the scheduled ingestion Cloud Function), item 3 (the "Today's Brief" dashboard view, within this app), and item 4 (email delivery) are scaffolded. Item 5 (the nutritionist agent) is next.
 
 Note on item 3: the spec (3.5) also wants this card on the *Family Command Center* app's homepage — that's a separate codebase not available in this repo/session, so it's out of scope here. `/admin/today` is the Daily Brief app's own equivalent; the same `dailyBriefs/{date}` read could be reused to build the Family Command Center card later.
 
@@ -20,9 +20,9 @@ Note on item 3: the spec (3.5) also wants this card on the *Family Command Cente
 7. In `functions/src/index.ts`, set `TIMEZONE` to the family's actual timezone (defaults to a placeholder).
 8. Deploy: `firebase use <project-id>`, then `npx firebase-tools deploy` (rules + the scheduled function together).
 9. `npm install && npm run dev`, then sign in at `/login`.
-10. In `/admin/calendars`, connect Michelle's and Dan's Google accounts (each does its own OAuth consent — read-only Calendar access).
+10. In `/admin/calendars`, connect Michelle's and Dan's Google accounts (each does its own OAuth consent — Michelle's also grants `gmail.send` so the ingestion job can email the brief from her account; Dan's is calendar-only).
 
-Once both calendars are connected and there's at least one `briefRules`/`recurringSchedule` entry, `dailyIngestion` runs automatically every morning at 5am (family timezone) and writes `dailyBriefs/{date}` docs. Trigger it manually to test: `firebase functions:shell` → `dailyIngestion()`, or via the Firebase console's "Run now" on the scheduled function.
+Once both calendars are connected and there's at least one `briefRules`/`recurringSchedule` entry, `dailyIngestion` runs automatically every morning at 5am (family timezone), writes `dailyBriefs/{date}` docs, and — once Michelle has granted `gmail.send` — emails that day's brief to every connected parent's address. If Michelle hasn't granted that scope yet (e.g. she connected before this feature existed and hasn't reconnected), the job logs and skips the email rather than failing the whole run. Trigger it manually to test: `firebase functions:shell` → `dailyIngestion()`, or via the Firebase console's "Run now" on the scheduled function.
 
 ## What's here
 
@@ -41,10 +41,10 @@ Once both calendars are connected and there's at least one `briefRules`/`recurri
 - `src/app/admin/calendars` — connect/disconnect Michelle's and Dan's Google Calendars
 - `src/app/api/google/*` — server routes for the OAuth connect flow (`connect-url`, `callback`, `status`, `disconnect`)
 - `firestore.rules` — `briefRules`/`recurringSchedule` readable/writable by the signed-in user; `googleAccounts` (OAuth refresh tokens) is server-only; `dailyBriefs` is server-write/client-read
-- `functions/` — separate Node project (Firebase Functions v2, its own `package.json`/deploy). `dailyIngestion` runs on a 5am schedule: pulls the recurring schedule + both parents' Google Calendars for today + next 2 days, runs the same rule-matching logic (mirrored from `src/lib/ruleMatcher.ts` since this deploys independently of the Next app), and writes `dailyBriefs/{date}`. `src/dailyIngestion.ts` separates the pure "assemble a brief from already-fetched data" logic from the Firestore/Calendar IO in `index.ts`, so the assembly logic is unit-tested without live services.
+- `functions/` — separate Node project (Firebase Functions v2, its own `package.json`/deploy). `dailyIngestion` runs on a 5am schedule: pulls the recurring schedule + both parents' Google Calendars for today + next 2 days, runs the same rule-matching logic (mirrored from `src/lib/ruleMatcher.ts` since this deploys independently of the Next app), writes `dailyBriefs/{date}`, and emails today's brief (`emailBrief.ts`, using Michelle's `gmail.send`-scoped refresh token) to every connected parent. `src/dailyIngestion.ts` and the `composeBriefEmail` half of `emailBrief.ts` separate pure "build this from already-fetched data" logic from the Firestore/Calendar/Gmail IO in `index.ts`, so the assembly/composition logic is unit-tested without live services.
 
 Everything under `/admin` is client-rendered and auth-gated; there's no public data. Run `npm test` in both `daily-brief/` and `daily-brief/functions/` for the unit tests.
 
 ## Not yet built
 
-Per the spec's build order: email delivery, the nutritionist agent, and the extras (weather, forms tracker, prep-ahead flags, travel flag). The Jake daycare-calendar upload (spec 3.0.1) also isn't wired into `dailyIngestion` yet — it's a separate later build-order item. The Family Command Center homepage card (spec 3.5) needs that other app's codebase.
+Per the spec's build order: the nutritionist agent, and the extras (weather, forms tracker, prep-ahead flags, travel flag). The Jake daycare-calendar upload (spec 3.0.1) also isn't wired into `dailyIngestion` yet — it's a separate later build-order item. The Family Command Center homepage card (spec 3.5) needs that other app's codebase. The email is schedule + prep reminders only for now — the grocery list and forms/outstanding sections the spec describes depend on the nutritionist agent and forms tracker, both still ahead in the build order.

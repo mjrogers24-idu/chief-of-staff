@@ -85,7 +85,9 @@ function CalendarsPageInner() {
     <div className="flex flex-col gap-6">
       <p className="text-sm text-gray-500">
         Read-only access to each parent&apos;s Google Calendar, used to pull one-off events
-        (practices, field trips, appointments) into the brief.
+        (practices, field trips, appointments) into the brief. Michelle&apos;s connection also
+        grants permission to send the morning brief email — her consent screen will list an
+        extra &quot;send email&quot; permission that Dan&apos;s doesn&apos;t.
       </p>
 
       {notice && <p className="rounded bg-gray-100 px-3 py-2 text-sm text-gray-700">{notice}</p>}

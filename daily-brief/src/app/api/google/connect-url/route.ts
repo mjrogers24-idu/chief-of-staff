@@ -1,6 +1,6 @@
 import { NextRequest, NextResponse } from "next/server";
 import { getAdminAuth } from "@/lib/firebaseAdmin";
-import { CALENDAR_READONLY_SCOPE, createOAuthClient, isParent, signState } from "@/lib/googleOAuth";
+import { createOAuthClient, isParent, scopesFor, signState } from "@/lib/googleOAuth";
 
 function bearerToken(req: NextRequest): string | null {
   const header = req.headers.get("authorization");
@@ -28,7 +28,7 @@ export async function POST(req: NextRequest) {
   const url = client.generateAuthUrl({
     access_type: "offline",
     prompt: "consent",
-    scope: [CALENDAR_READONLY_SCOPE],
+    scope: scopesFor(parent),
     state: signState(parent),
   });
 
