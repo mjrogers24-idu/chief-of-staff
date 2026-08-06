@@ -1,4 +1,22 @@
 {
-  "indexes": [],
+  "indexes": [
+    {
+      "collectionGroup": "uploadedEvents",
+      "queryScope": "COLLECTION",
+      "fields": [
+        { "fieldPath": "confirmed", "order": "ASCENDING" },
+        { "fieldPath": "date", "order": "ASCENDING" }
+      ]
+    },
+    {
+      "collectionGroup": "uploadedEvents",
+      "queryScope": "COLLECTION",
+      "fields": [
+        { "fieldPath": "kid", "order": "ASCENDING" },
+        { "fieldPath": "month", "order": "ASCENDING" },
+        { "fieldPath": "date", "order": "ASCENDING" }
+      ]
+    }
+  ],
   "fieldOverrides": []
 }

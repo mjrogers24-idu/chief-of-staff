@@ -2,7 +2,7 @@ import { getFirestore } from "firebase-admin/firestore";
 import { logger } from "firebase-functions";
 import { HttpsError, onCall } from "firebase-functions/v2/https";
 import { addDays, toDateKey } from "./dailyIngestion";
-import { fetchAccounts, fetchRecurringItems, fetchRules } from "./firestoreReads";
+import { fetchAccounts, fetchConfirmedUploadedEvents, fetchRecurringItems, fetchRules } from "./firestoreReads";
 import { callGemini } from "./gemini";
 import { fetchMergedCalendarEvents } from "./googleCalendar";
 import {
@@ -52,14 +52,17 @@ export const generateMealPlan = onCall(async (request) => {
       .get(),
   ]);
 
-  const calendarEvents = await fetchMergedCalendarEvents(
-    accounts,
-    dates[0],
-    addDays(dates[dates.length - 1], 1),
-    (account, error) => logger.error(`Calendar fetch failed for ${account.parent}`, error),
-  );
+  const [calendarEvents, uploadedEvents] = await Promise.all([
+    fetchMergedCalendarEvents(
+      accounts,
+      dates[0],
+      addDays(dates[dates.length - 1], 1),
+      (account, error) => logger.error(`Calendar fetch failed for ${account.parent}`, error),
+    ),
+    fetchConfirmedUploadedEvents(db, toDateKey(dates[0]), toDateKey(dates[dates.length - 1])),
+  ]);
 
-  const busyNights = busyNightsForWeek(dates, recurringItems, calendarEvents, rules);
+  const busyNights = busyNightsForWeek(dates, recurringItems, calendarEvents, rules, uploadedEvents);
 
   const recentMeals = historySnap.docs.flatMap((doc) => {
     const days = (doc.data().days ?? []) as { meal?: string }[];

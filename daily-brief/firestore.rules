@@ -27,5 +27,11 @@ service cloud.firestore {
       allow read: if request.auth != null;
       allow write: if false;
     }
+    // Initially written by the parseCalendarUpload callable (Admin SDK)
+    // as unconfirmed events; Michelle edits/confirms/deletes them
+    // directly from /admin/daycare, same as briefRules/recurringSchedule.
+    match /uploadedEvents/{eventId} {
+      allow read, write: if request.auth != null;
+    }
   }
 }

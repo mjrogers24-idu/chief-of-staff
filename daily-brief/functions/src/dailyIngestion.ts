@@ -8,6 +8,14 @@ export interface DailyBrief {
   actions: MatchedAction[];
 }
 
+/** A confirmed event parsed from Jake's uploaded daycare calendar (spec 3.0.1). */
+export interface UploadedEvent {
+  id: string;
+  kid: string;
+  date: string;
+  title: string;
+}
+
 export function toDateKey(date: Date): string {
   return date.toISOString().slice(0, 10);
 }
@@ -29,6 +37,7 @@ export function assembleDailyBrief(
   recurringItems: RecurringScheduleItem[],
   calendarEvents: CalendarEvent[],
   rules: RuleLike[],
+  uploadedEvents: UploadedEvent[] = [],
 ): DailyBrief {
   const dateKey = toDateKey(date);
 
@@ -50,7 +59,17 @@ export function assembleDailyBrief(
       source: "calendar",
     }));
 
-  const scheduleItems = [...recurringForDate, ...calendarForDate];
+  const uploadedForDate: ScheduleItem[] = uploadedEvents
+    .filter((event) => event.date === dateKey)
+    .map((event) => ({
+      id: `uploaded:${event.id}`,
+      title: event.title,
+      date: dateKey,
+      kid: event.kid,
+      source: "uploaded-calendar",
+    }));
+
+  const scheduleItems = [...recurringForDate, ...calendarForDate, ...uploadedForDate];
   const actions = matchBriefRules(scheduleItems, rules);
 
   return { date: dateKey, scheduleItems, actions };

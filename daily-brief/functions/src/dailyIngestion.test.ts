@@ -52,4 +52,29 @@ describe("assembleDailyBrief", () => {
     expect(brief.scheduleItems).toHaveLength(0);
     expect(brief.actions).toHaveLength(0);
   });
+
+  it("merges confirmed uploaded-calendar events for that day, tagged with their kid", () => {
+    const uploaded = [{ id: "u1", kid: "Jake", date: toDateKey(monday), title: "Crazy hair day" }];
+    const jakeRule: RuleLike[] = [
+      { keyword: "crazy hair", kid: "Jake", wearNote: "wild hairdo", dinnerFlag: null },
+    ];
+    const brief = assembleDailyBrief(monday, [], [], jakeRule, uploaded);
+
+    expect(brief.scheduleItems).toHaveLength(1);
+    expect(brief.scheduleItems[0]).toMatchObject({
+      title: "Crazy hair day",
+      kid: "Jake",
+      source: "uploaded-calendar",
+    });
+    expect(brief.actions).toHaveLength(1);
+    expect(brief.actions[0].rule.wearNote).toBe("wild hairdo");
+  });
+
+  it("excludes uploaded events for other days", () => {
+    const uploaded = [
+      { id: "u1", kid: "Jake", date: toDateKey(addDays(monday, 3)), title: "Field trip" },
+    ];
+    const brief = assembleDailyBrief(monday, [], [], [], uploaded);
+    expect(brief.scheduleItems).toHaveLength(0);
+  });
 });

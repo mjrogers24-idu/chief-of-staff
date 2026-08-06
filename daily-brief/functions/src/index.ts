@@ -2,12 +2,19 @@ import { initializeApp } from "firebase-admin/app";
 import { getFirestore } from "firebase-admin/firestore";
 import { logger } from "firebase-functions";
 import { onSchedule } from "firebase-functions/v2/scheduler";
-import { addDays, assembleDailyBrief, type DailyBrief } from "./dailyIngestion";
+import { addDays, assembleDailyBrief, toDateKey, type DailyBrief } from "./dailyIngestion";
 import { composeBriefEmail, GMAIL_SEND_SCOPE, sendBriefEmail } from "./emailBrief";
-import { fetchAccounts, fetchRecurringItems, fetchRules, type StoredAccount } from "./firestoreReads";
+import {
+  fetchAccounts,
+  fetchConfirmedUploadedEvents,
+  fetchRecurringItems,
+  fetchRules,
+  type StoredAccount,
+} from "./firestoreReads";
 import { fetchMergedCalendarEvents } from "./googleCalendar";
 
 export { generateMealPlan } from "./generateMealPlan";
+export { parseCalendarUpload } from "./parseCalendarUpload";
 
 initializeApp();
 
@@ -56,14 +63,19 @@ export const dailyIngestion = onSchedule(
       fetchAccounts(db),
     ]);
 
-    const calendarEvents = await fetchMergedCalendarEvents(
-      accounts,
-      dates[0],
-      addDays(dates[dates.length - 1], 1),
-      (account, error) => logger.error(`Calendar fetch failed for ${account.parent}`, error),
-    );
+    const [calendarEvents, uploadedEvents] = await Promise.all([
+      fetchMergedCalendarEvents(
+        accounts,
+        dates[0],
+        addDays(dates[dates.length - 1], 1),
+        (account, error) => logger.error(`Calendar fetch failed for ${account.parent}`, error),
+      ),
+      fetchConfirmedUploadedEvents(db, toDateKey(dates[0]), toDateKey(dates[dates.length - 1])),
+    ]);
 
-    const briefs = dates.map((date) => assembleDailyBrief(date, recurringItems, calendarEvents, rules));
+    const briefs = dates.map((date) =>
+      assembleDailyBrief(date, recurringItems, calendarEvents, rules, uploadedEvents),
+    );
 
     await Promise.all(
       briefs.map((brief) =>

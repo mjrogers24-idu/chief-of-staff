@@ -1,4 +1,4 @@
-import { assembleDailyBrief } from "./dailyIngestion";
+import { assembleDailyBrief, type UploadedEvent } from "./dailyIngestion";
 import type { CalendarEvent } from "./googleCalendar";
 import { weekdayOf, type RecurringScheduleItem } from "./recurringSchedule";
 import type { RuleLike } from "./ruleMatcher";
@@ -189,10 +189,11 @@ export function busyNightsForWeek(
   recurringItems: RecurringScheduleItem[],
   calendarEvents: CalendarEvent[],
   rules: RuleLike[],
+  uploadedEvents: UploadedEvent[] = [],
 ): string[] {
   const lines: string[] = [];
   for (const date of dates) {
-    const brief = assembleDailyBrief(date, recurringItems, calendarEvents, rules);
+    const brief = assembleDailyBrief(date, recurringItems, calendarEvents, rules, uploadedEvents);
     const flagged = brief.actions.filter((a) => a.rule.dinnerFlag);
     if (flagged.length > 0) {
       lines.push(`${weekdayOf(date)} (${flagged.map((a) => a.item.title).join(", ")})`);

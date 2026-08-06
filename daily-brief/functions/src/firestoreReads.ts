@@ -1,4 +1,5 @@
 import type { Firestore } from "firebase-admin/firestore";
+import type { UploadedEvent } from "./dailyIngestion";
 import type { GoogleAccount, Parent } from "./googleCalendar";
 import type { RecurringScheduleItem } from "./recurringSchedule";
 import type { RuleLike } from "./ruleMatcher";
@@ -45,5 +46,23 @@ export async function fetchAccounts(db: Firestore): Promise<StoredAccount[]> {
       email: data.email ?? null,
       scope: data.scope ?? null,
     };
+  });
+}
+
+/** Confirmed events parsed from an uploaded daycare calendar, in a date range (inclusive). */
+export async function fetchConfirmedUploadedEvents(
+  db: Firestore,
+  fromDateKey: string,
+  toDateKey: string,
+): Promise<UploadedEvent[]> {
+  const snap = await db
+    .collection("uploadedEvents")
+    .where("confirmed", "==", true)
+    .where("date", ">=", fromDateKey)
+    .where("date", "<=", toDateKey)
+    .get();
+  return snap.docs.map((doc) => {
+    const data = doc.data();
+    return { id: doc.id, kid: data.kid, date: data.date, title: data.title };
   });
 }
