@@ -4,9 +4,10 @@ import { logger } from "firebase-functions";
 import { onSchedule } from "firebase-functions/v2/scheduler";
 import { addDays, assembleDailyBrief, type DailyBrief } from "./dailyIngestion";
 import { composeBriefEmail, GMAIL_SEND_SCOPE, sendBriefEmail } from "./emailBrief";
-import { fetchMergedCalendarEvents, type GoogleAccount, type Parent } from "./googleCalendar";
-import type { RecurringScheduleItem } from "./recurringSchedule";
-import type { RuleLike } from "./ruleMatcher";
+import { fetchAccounts, fetchRecurringItems, fetchRules, type StoredAccount } from "./firestoreReads";
+import { fetchMergedCalendarEvents } from "./googleCalendar";
+
+export { generateMealPlan } from "./generateMealPlan";
 
 initializeApp();
 
@@ -17,11 +18,6 @@ const TIMEZONE = "America/New_York";
 
 /** How many days ahead (inclusive of today) to ingest, per spec 3.2. */
 const DAYS_AHEAD = 3;
-
-interface StoredAccount extends GoogleAccount {
-  email: string | null;
-  scope: string | null;
-}
 
 async function sendTodaysBriefEmail(accounts: StoredAccount[], brief: DailyBrief): Promise<void> {
   const sender = accounts.find(
@@ -54,42 +50,11 @@ export const dailyIngestion = onSchedule(
     const today = new Date();
     const dates = Array.from({ length: DAYS_AHEAD }, (_, i) => addDays(today, i));
 
-    const [scheduleSnap, rulesSnap, accountsSnap] = await Promise.all([
-      db.collection("recurringSchedule").get(),
-      db.collection("briefRules").get(),
-      db.collection("googleAccounts").get(),
+    const [recurringItems, rules, accounts] = await Promise.all([
+      fetchRecurringItems(db),
+      fetchRules(db),
+      fetchAccounts(db),
     ]);
-
-    const recurringItems: RecurringScheduleItem[] = scheduleSnap.docs.map((doc) => {
-      const data = doc.data();
-      return {
-        id: doc.id,
-        kid: data.kid,
-        label: data.label,
-        daysOfWeek: data.daysOfWeek ?? [],
-        note: data.note ?? null,
-      };
-    });
-
-    const rules: RuleLike[] = rulesSnap.docs.map((doc) => {
-      const data = doc.data();
-      return {
-        keyword: data.keyword,
-        kid: data.kid ?? null,
-        wearNote: data.wearNote ?? null,
-        dinnerFlag: data.dinnerFlag ?? null,
-      };
-    });
-
-    const accounts: StoredAccount[] = accountsSnap.docs.map((doc) => {
-      const data = doc.data();
-      return {
-        parent: doc.id as Parent,
-        refreshToken: data.refreshToken,
-        email: data.email ?? null,
-        scope: data.scope ?? null,
-      };
-    });
 
     const calendarEvents = await fetchMergedCalendarEvents(
       accounts,
