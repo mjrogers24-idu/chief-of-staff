@@ -22,9 +22,8 @@ export { parseCalendarUpload } from "./parseCalendarUpload";
 
 initializeApp();
 
-// TODO: set this to the family's actual timezone before deploying —
-// determines both when "5am" fires and which calendar day an event falls
-// on. Placeholder pending confirmation.
+// Eastern time (Greer, SC) — determines both when "5am" fires and which
+// calendar day an event falls on.
 const TIMEZONE = "America/New_York";
 
 /** How many days ahead (inclusive of today) to ingest, per spec 3.2. */
