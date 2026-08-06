@@ -44,6 +44,14 @@ function taskLine(task: BriefDocument["openTasks"][number]): string {
   return task.dueDate ? `${task.title} (due ${task.dueDate})` : task.title;
 }
 
+function dinnerLines(dinner: BriefDocument["dinnerTonight"]): string[] {
+  if (!dinner) return [];
+  const lines = [dinner.meal];
+  if (dinner.kid_version) lines.push(`Kids: ${dinner.kid_version}`);
+  if (dinner.adult_lighter_option) lines.push(`Adults (lighter): ${dinner.adult_lighter_option}`);
+  return lines;
+}
+
 /**
  * Pure — no network calls — so it's unit-tested directly. sendBriefEmail
  * below is the IO half (Gmail API), same split as googleCalendar.ts and
@@ -61,6 +69,7 @@ export function composeBriefEmail(brief: BriefDocument): BriefEmailContent {
     (line): line is string => !!line,
   );
   const taskLines = brief.openTasks.map(taskLine);
+  const dinner = dinnerLines(brief.dinnerTonight);
 
   const text = [
     subject,
@@ -71,6 +80,7 @@ export function composeBriefEmail(brief: BriefDocument): BriefEmailContent {
     "",
     "PREP REMINDERS",
     ...actionLines.map((line) => `- ${line}`),
+    ...(dinner.length ? ["", "DINNER TONIGHT", ...dinner.map((line) => `- ${line}`)] : []),
     ...(taskLines.length ? ["", "FORMS & OUTSTANDING", ...taskLines.map((line) => `- ${line}`)] : []),
   ].join("\n");
 
@@ -85,6 +95,12 @@ export function composeBriefEmail(brief: BriefDocument): BriefEmailContent {
     `<ul>${scheduleLines.map((line) => `<li>${escapeHtml(line)}</li>`).join("")}</ul>`,
     "<h3>Prep reminders</h3>",
     `<ul>${actionLines.map((line) => `<li>${escapeHtml(line)}</li>`).join("")}</ul>`,
+    ...(dinner.length
+      ? [
+          "<h3>Dinner tonight</h3>",
+          `<ul>${dinner.map((line) => `<li>${escapeHtml(line)}</li>`).join("")}</ul>`,
+        ]
+      : []),
     ...(taskLines.length
       ? [
           "<h3>Forms &amp; outstanding</h3>",

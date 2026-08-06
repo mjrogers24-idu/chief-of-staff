@@ -1,5 +1,6 @@
 import { doc, onSnapshot } from "firebase/firestore";
 import { db } from "@/lib/firebase";
+import type { MealDay } from "@/lib/firestore/mealPlans";
 import type { RuleLike, ScheduleItem } from "@/lib/ruleMatcher";
 
 const COLLECTION = "dailyBriefs";
@@ -19,6 +20,7 @@ export interface DailyBriefDoc {
   prepAheadNote: string | null;
   travelNote: string | null;
   openTasks: { id: string; title: string; dueDate: string | null }[];
+  dinnerTonight: MealDay | null;
 }
 
 export function todayDateKey(): string {

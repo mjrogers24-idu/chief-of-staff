@@ -14,6 +14,7 @@ import {
   type StoredAccount,
 } from "./firestoreReads";
 import { fetchMergedCalendarEvents, type CalendarEvent } from "./googleCalendar";
+import { mealForDate, mondayOf, type MealDay } from "./mealPlan";
 import { fetchForecast, type DayForecast } from "./weather";
 
 export { generateMealPlan } from "./generateMealPlan";
@@ -68,11 +69,22 @@ async function loadForecast(): Promise<Map<string, DayForecast>> {
   }
 }
 
+async function loadThisWeeksMealPlan(
+  db: FirebaseFirestore.Firestore,
+): Promise<{ days: MealDay[] } | null> {
+  const weekStart = toDateKey(mondayOf(new Date()));
+  const snap = await db.collection("mealPlans").doc(weekStart).get();
+  if (!snap.exists) return null;
+  return { days: (snap.data()?.days ?? []) as MealDay[] };
+}
+
 function buildBriefDocuments(
+  dates: Date[],
   briefs: DailyBrief[],
   calendarEvents: CalendarEvent[],
   forecast: Map<string, DayForecast>,
   openTasks: { id: string; title: string; dueDate: string | null }[],
+  mealPlan: { days: MealDay[] } | null,
 ): BriefDocument[] {
   return briefs.map((brief, i) => ({
     ...brief,
@@ -81,6 +93,7 @@ function buildBriefDocuments(
     prepAheadNote: computePrepAheadNote(briefs[i + 1]),
     travelNote: composeTravelNote(detectTravelingParents(calendarEvents, brief.date)),
     openTasks,
+    dinnerTonight: mealForDate(mealPlan, dates[i]),
   }));
 }
 
@@ -98,7 +111,7 @@ export const dailyIngestion = onSchedule(
       fetchOpenTasks(db),
     ]);
 
-    const [calendarEvents, uploadedEvents, forecast] = await Promise.all([
+    const [calendarEvents, uploadedEvents, forecast, mealPlan] = await Promise.all([
       fetchMergedCalendarEvents(
         accounts,
         dates[0],
@@ -107,12 +120,13 @@ export const dailyIngestion = onSchedule(
       ),
       fetchConfirmedUploadedEvents(db, toDateKey(dates[0]), toDateKey(dates[dates.length - 1])),
       loadForecast(),
+      loadThisWeeksMealPlan(db),
     ]);
 
     const briefs = dates.map((date) =>
       assembleDailyBrief(date, recurringItems, calendarEvents, rules, uploadedEvents),
     );
-    const briefDocuments = buildBriefDocuments(briefs, calendarEvents, forecast, openTasks);
+    const briefDocuments = buildBriefDocuments(dates, briefs, calendarEvents, forecast, openTasks, mealPlan);
 
     await Promise.all(
       briefDocuments.map((doc) => db.collection("dailyBriefs").doc(doc.date).set(doc)),

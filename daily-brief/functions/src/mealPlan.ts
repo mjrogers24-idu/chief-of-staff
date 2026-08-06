@@ -176,6 +176,13 @@ export function weekdayDates(monday: Date): Date[] {
   });
 }
 
+/** This week's planned dinner for a given date, if one was generated (weekends have none). */
+export function mealForDate(plan: { days: MealDay[] } | null, date: Date): MealDay | null {
+  if (!plan) return null;
+  const label = weekdayOf(date);
+  return plan.days.find((day) => day.day === label) ?? null;
+}
+
 /**
  * A weeknight counts as "busy" when the rules engine flagged a
  * dinner-affecting event that day (briefRules.dinnerFlag) — reuses the

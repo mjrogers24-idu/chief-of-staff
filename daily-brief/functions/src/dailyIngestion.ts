@@ -1,4 +1,5 @@
 import type { CalendarEvent } from "./googleCalendar";
+import type { MealDay } from "./mealPlan";
 import { scheduleForDate, type RecurringScheduleItem } from "./recurringSchedule";
 import { matchBriefRules, type MatchedAction, type RuleLike, type ScheduleItem } from "./ruleMatcher";
 
@@ -28,6 +29,8 @@ export interface BriefDocument extends DailyBrief {
   prepAheadNote: string | null;
   travelNote: string | null;
   openTasks: { id: string; title: string; dueDate: string | null }[];
+  /** This week's planned dinner for this date, if the nutritionist agent has run (spec 3.4). */
+  dinnerTonight: MealDay | null;
 }
 
 export function toDateKey(date: Date): string {

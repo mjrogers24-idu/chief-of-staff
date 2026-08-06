@@ -3,14 +3,16 @@ import {
   busyNightsForWeek,
   composeMealPrompt,
   FAMILY_FAVORITES,
+  mealForDate,
   mondayOf,
   parseMealPlanResponse,
   weekdayDates,
+  type MealDay,
 } from "./mealPlan";
 import type { CalendarEvent } from "./googleCalendar";
 import type { RecurringScheduleItem } from "./recurringSchedule";
 import type { RuleLike } from "./ruleMatcher";
-import { toDateKey } from "./dailyIngestion";
+import { addDays, toDateKey } from "./dailyIngestion";
 
 describe("mondayOf / weekdayDates", () => {
   it("finds the Monday of the week for a mid-week date", () => {
@@ -134,5 +136,32 @@ describe("busyNightsForWeek", () => {
   it("returns nothing when no rule sets a dinnerFlag", () => {
     const noFlagRules: RuleLike[] = rules.map((r) => ({ ...r, dinnerFlag: null }));
     expect(busyNightsForWeek(dates, recurring, calendarEvents, noFlagRules)).toHaveLength(0);
+  });
+});
+
+describe("mealForDate", () => {
+  const monday = new Date("2026-08-10T12:00:00Z");
+  const days: MealDay[] = [
+    {
+      day: "Mon",
+      meal: "Tacos",
+      time_minutes: 20,
+      prep_type: "stovetop",
+      kid_version: "plain",
+      adult_lighter_option: "lettuce wrap",
+      notes: "",
+    },
+  ];
+
+  it("returns null when there's no plan", () => {
+    expect(mealForDate(null, monday)).toBeNull();
+  });
+
+  it("finds the day matching the date's weekday", () => {
+    expect(mealForDate({ days }, monday)?.meal).toBe("Tacos");
+  });
+
+  it("returns null for a weekday the plan has no entry for", () => {
+    expect(mealForDate({ days }, addDays(monday, 1))).toBeNull();
   });
 });

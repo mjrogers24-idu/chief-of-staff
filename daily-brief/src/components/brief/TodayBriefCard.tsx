@@ -89,6 +89,23 @@ export function TodayBriefCard({ brief, loading, error }: TodayBriefCardProps) {
             )}
           </section>
 
+          {brief.dinnerTonight && (
+            <section className="flex flex-col gap-2">
+              <h3 className="text-xs font-semibold uppercase text-gray-400">Dinner tonight</h3>
+              <div className="text-sm">
+                <p className="font-medium">{brief.dinnerTonight.meal}</p>
+                {brief.dinnerTonight.kid_version && (
+                  <p className="text-gray-600">Kids: {brief.dinnerTonight.kid_version}</p>
+                )}
+                {brief.dinnerTonight.adult_lighter_option && (
+                  <p className="text-gray-600">
+                    Adults (lighter): {brief.dinnerTonight.adult_lighter_option}
+                  </p>
+                )}
+              </div>
+            </section>
+          )}
+
           {brief.openTasks.length > 0 && (
             <section className="flex flex-col gap-2">
               <h3 className="text-xs font-semibold uppercase text-gray-400">Forms &amp; outstanding</h3>

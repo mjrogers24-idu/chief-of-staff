@@ -12,6 +12,7 @@ function brief(overrides: Partial<BriefDocument>): BriefDocument {
     prepAheadNote: null,
     travelNote: null,
     openTasks: [],
+    dinnerTonight: null,
     ...overrides,
   };
 }
@@ -102,5 +103,29 @@ describe("composeBriefEmail", () => {
     expect(withTasks.text).toContain("FORMS & OUTSTANDING");
     expect(withTasks.text).toContain("- Field trip permission slip (due 2026-08-08)");
     expect(withTasks.html).toContain("Field trip permission slip (due 2026-08-08)");
+  });
+
+  it("includes a Dinner Tonight section only when a meal plan covers today", () => {
+    const withoutDinner = composeBriefEmail(brief({}));
+    expect(withoutDinner.text).not.toContain("DINNER TONIGHT");
+
+    const withDinner = composeBriefEmail(
+      brief({
+        dinnerTonight: {
+          day: "Thu",
+          meal: "Tacos (build-your-own)",
+          time_minutes: 25,
+          prep_type: "stovetop",
+          kid_version: "plain beef, cheese, tortilla",
+          adult_lighter_option: "lettuce wrap",
+          notes: "",
+        },
+      }),
+    );
+    expect(withDinner.text).toContain("DINNER TONIGHT");
+    expect(withDinner.text).toContain("- Tacos (build-your-own)");
+    expect(withDinner.text).toContain("- Kids: plain beef, cheese, tortilla");
+    expect(withDinner.text).toContain("- Adults (lighter): lettuce wrap");
+    expect(withDinner.html).toContain("Tacos (build-your-own)");
   });
 });
