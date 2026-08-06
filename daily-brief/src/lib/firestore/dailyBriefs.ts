@@ -15,6 +15,10 @@ export interface DailyBriefDoc {
   scheduleItems: ScheduleItem[];
   actions: MatchedActionDoc[];
   generatedAt: string;
+  weatherNote: string | null;
+  prepAheadNote: string | null;
+  travelNote: string | null;
+  openTasks: { id: string; title: string; dueDate: string | null }[];
 }
 
 export function todayDateKey(): string {

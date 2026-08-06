@@ -14,6 +14,7 @@ const NAV = [
   { href: "/admin/calendars", label: "Calendars" },
   { href: "/admin/meals", label: "Meals" },
   { href: "/admin/daycare", label: "Daycare" },
+  { href: "/admin/tasks", label: "Tasks" },
 ];
 
 export default function AdminLayout({ children }: { children: ReactNode }) {

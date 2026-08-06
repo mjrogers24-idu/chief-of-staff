@@ -16,6 +16,20 @@ export interface UploadedEvent {
   title: string;
 }
 
+/**
+ * The full dailyBriefs/{date} document — a DailyBrief plus the spec 3.4
+ * extras, which are composed separately in index.ts (weather/prep-ahead/
+ * travel need data — forecasts, tomorrow's brief, parent-tagged calendar
+ * events — that assembleDailyBrief itself doesn't have).
+ */
+export interface BriefDocument extends DailyBrief {
+  generatedAt: string;
+  weatherNote: string | null;
+  prepAheadNote: string | null;
+  travelNote: string | null;
+  openTasks: { id: string; title: string; dueDate: string | null }[];
+}
+
 export function toDateKey(date: Date): string {
   return date.toISOString().slice(0, 10);
 }

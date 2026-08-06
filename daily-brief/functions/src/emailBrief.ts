@@ -1,5 +1,5 @@
 import { google } from "googleapis";
-import type { DailyBrief } from "./dailyIngestion";
+import type { BriefDocument } from "./dailyIngestion";
 
 export const GMAIL_SEND_SCOPE = "https://www.googleapis.com/auth/gmail.send";
 
@@ -27,11 +27,11 @@ function formatDate(dateKey: string): string {
   });
 }
 
-function scheduleLine(item: DailyBrief["scheduleItems"][number]): string {
+function scheduleLine(item: BriefDocument["scheduleItems"][number]): string {
   return item.kid ? `${item.kid} — ${item.title}` : item.title;
 }
 
-function actionLine(action: DailyBrief["actions"][number]): string {
+function actionLine(action: BriefDocument["actions"][number]): string {
   const notes: string[] = [];
   if (action.rule.wearNote) notes.push(`wear ${action.rule.wearNote}`);
   if (action.rule.dinnerFlag) notes.push(`dinner: ${action.rule.dinnerFlag}`);
@@ -40,12 +40,16 @@ function actionLine(action: DailyBrief["actions"][number]): string {
   return `${who} — ${action.item.title}${suffix}`;
 }
 
+function taskLine(task: BriefDocument["openTasks"][number]): string {
+  return task.dueDate ? `${task.title} (due ${task.dueDate})` : task.title;
+}
+
 /**
  * Pure — no network calls — so it's unit-tested directly. sendBriefEmail
  * below is the IO half (Gmail API), same split as googleCalendar.ts and
  * the Firestore/Calendar fetch in index.ts.
  */
-export function composeBriefEmail(brief: DailyBrief): BriefEmailContent {
+export function composeBriefEmail(brief: BriefDocument): BriefEmailContent {
   const dateLabel = formatDate(brief.date);
   const subject = `Daily Brief — ${dateLabel}`;
 
@@ -53,25 +57,40 @@ export function composeBriefEmail(brief: DailyBrief): BriefEmailContent {
     ? brief.scheduleItems.map(scheduleLine)
     : ["Nothing on the schedule today."];
   const actionLines = brief.actions.length ? brief.actions.map(actionLine) : ["Nothing flagged."];
+  const highlights = [brief.weatherNote, brief.prepAheadNote, brief.travelNote].filter(
+    (line): line is string => !!line,
+  );
+  const taskLines = brief.openTasks.map(taskLine);
 
   const text = [
     subject,
     "",
+    ...(highlights.length ? [...highlights, ""] : []),
     "SCHEDULE",
     ...scheduleLines.map((line) => `- ${line}`),
     "",
     "PREP REMINDERS",
     ...actionLines.map((line) => `- ${line}`),
+    ...(taskLines.length ? ["", "FORMS & OUTSTANDING", ...taskLines.map((line) => `- ${line}`)] : []),
   ].join("\n");
 
   const html = [
     '<div style="font-family: sans-serif; max-width: 480px; color: #111;">',
     "<h2>Daily Brief</h2>",
     `<p style="color:#666">${escapeHtml(dateLabel)}</p>`,
+    ...(highlights.length
+      ? [`<ul>${highlights.map((line) => `<li>${escapeHtml(line)}</li>`).join("")}</ul>`]
+      : []),
     "<h3>Schedule</h3>",
     `<ul>${scheduleLines.map((line) => `<li>${escapeHtml(line)}</li>`).join("")}</ul>`,
     "<h3>Prep reminders</h3>",
     `<ul>${actionLines.map((line) => `<li>${escapeHtml(line)}</li>`).join("")}</ul>`,
+    ...(taskLines.length
+      ? [
+          "<h3>Forms &amp; outstanding</h3>",
+          `<ul>${taskLines.map((line) => `<li>${escapeHtml(line)}</li>`).join("")}</ul>`,
+        ]
+      : []),
     "</div>",
   ].join("");
 

@@ -2,16 +2,19 @@ import { initializeApp } from "firebase-admin/app";
 import { getFirestore } from "firebase-admin/firestore";
 import { logger } from "firebase-functions";
 import { onSchedule } from "firebase-functions/v2/scheduler";
-import { addDays, assembleDailyBrief, toDateKey, type DailyBrief } from "./dailyIngestion";
+import { addDays, assembleDailyBrief, toDateKey, type BriefDocument, type DailyBrief } from "./dailyIngestion";
 import { composeBriefEmail, GMAIL_SEND_SCOPE, sendBriefEmail } from "./emailBrief";
+import { composeTravelNote, computePrepAheadNote, detectTravelingParents, formatWeatherNote } from "./extras";
 import {
   fetchAccounts,
   fetchConfirmedUploadedEvents,
+  fetchOpenTasks,
   fetchRecurringItems,
   fetchRules,
   type StoredAccount,
 } from "./firestoreReads";
-import { fetchMergedCalendarEvents } from "./googleCalendar";
+import { fetchMergedCalendarEvents, type CalendarEvent } from "./googleCalendar";
+import { fetchForecast, type DayForecast } from "./weather";
 
 export { generateMealPlan } from "./generateMealPlan";
 export { parseCalendarUpload } from "./parseCalendarUpload";
@@ -26,7 +29,7 @@ const TIMEZONE = "America/New_York";
 /** How many days ahead (inclusive of today) to ingest, per spec 3.2. */
 const DAYS_AHEAD = 3;
 
-async function sendTodaysBriefEmail(accounts: StoredAccount[], brief: DailyBrief): Promise<void> {
+async function sendTodaysBriefEmail(accounts: StoredAccount[], brief: BriefDocument): Promise<void> {
   const sender = accounts.find(
     (a) => a.parent === "michelle" && (a.scope ?? "").includes(GMAIL_SEND_SCOPE),
   );
@@ -50,6 +53,37 @@ async function sendTodaysBriefEmail(accounts: StoredAccount[], brief: DailyBrief
   }
 }
 
+async function loadForecast(): Promise<Map<string, DayForecast>> {
+  const lat = process.env.WEATHER_LATITUDE;
+  const lon = process.env.WEATHER_LONGITUDE;
+  if (!lat || !lon) {
+    logger.info("Skipping weather: WEATHER_LATITUDE/WEATHER_LONGITUDE are not set.");
+    return new Map();
+  }
+  try {
+    return await fetchForecast(Number(lat), Number(lon));
+  } catch (error) {
+    logger.error("Weather fetch failed", error);
+    return new Map();
+  }
+}
+
+function buildBriefDocuments(
+  briefs: DailyBrief[],
+  calendarEvents: CalendarEvent[],
+  forecast: Map<string, DayForecast>,
+  openTasks: { id: string; title: string; dueDate: string | null }[],
+): BriefDocument[] {
+  return briefs.map((brief, i) => ({
+    ...brief,
+    generatedAt: new Date().toISOString(),
+    weatherNote: formatWeatherNote(forecast.get(brief.date)),
+    prepAheadNote: computePrepAheadNote(briefs[i + 1]),
+    travelNote: composeTravelNote(detectTravelingParents(calendarEvents, brief.date)),
+    openTasks,
+  }));
+}
+
 export const dailyIngestion = onSchedule(
   { schedule: "0 5 * * *", timeZone: TIMEZONE },
   async () => {
@@ -57,13 +91,14 @@ export const dailyIngestion = onSchedule(
     const today = new Date();
     const dates = Array.from({ length: DAYS_AHEAD }, (_, i) => addDays(today, i));
 
-    const [recurringItems, rules, accounts] = await Promise.all([
+    const [recurringItems, rules, accounts, openTasks] = await Promise.all([
       fetchRecurringItems(db),
       fetchRules(db),
       fetchAccounts(db),
+      fetchOpenTasks(db),
     ]);
 
-    const [calendarEvents, uploadedEvents] = await Promise.all([
+    const [calendarEvents, uploadedEvents, forecast] = await Promise.all([
       fetchMergedCalendarEvents(
         accounts,
         dates[0],
@@ -71,23 +106,20 @@ export const dailyIngestion = onSchedule(
         (account, error) => logger.error(`Calendar fetch failed for ${account.parent}`, error),
       ),
       fetchConfirmedUploadedEvents(db, toDateKey(dates[0]), toDateKey(dates[dates.length - 1])),
+      loadForecast(),
     ]);
 
     const briefs = dates.map((date) =>
       assembleDailyBrief(date, recurringItems, calendarEvents, rules, uploadedEvents),
     );
+    const briefDocuments = buildBriefDocuments(briefs, calendarEvents, forecast, openTasks);
 
     await Promise.all(
-      briefs.map((brief) =>
-        db
-          .collection("dailyBriefs")
-          .doc(brief.date)
-          .set({ ...brief, generatedAt: new Date().toISOString() }),
-      ),
+      briefDocuments.map((doc) => db.collection("dailyBriefs").doc(doc.date).set(doc)),
     );
 
-    logger.info(`Daily ingestion wrote briefs for ${briefs.map((b) => b.date).join(", ")}`);
+    logger.info(`Daily ingestion wrote briefs for ${briefDocuments.map((b) => b.date).join(", ")}`);
 
-    await sendTodaysBriefEmail(accounts, briefs[0]);
+    await sendTodaysBriefEmail(accounts, briefDocuments[0]);
   },
 );

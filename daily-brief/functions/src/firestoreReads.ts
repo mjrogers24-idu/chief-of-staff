@@ -9,6 +9,12 @@ export interface StoredAccount extends GoogleAccount {
   scope: string | null;
 }
 
+export interface OpenTask {
+  id: string;
+  title: string;
+  dueDate: string | null;
+}
+
 export async function fetchRecurringItems(db: Firestore): Promise<RecurringScheduleItem[]> {
   const snap = await db.collection("recurringSchedule").get();
   return snap.docs.map((doc) => {
@@ -64,5 +70,14 @@ export async function fetchConfirmedUploadedEvents(
   return snap.docs.map((doc) => {
     const data = doc.data();
     return { id: doc.id, kid: data.kid, date: data.date, title: data.title };
+  });
+}
+
+/** Not-yet-done items from the openTasks tracker (spec 3.4). */
+export async function fetchOpenTasks(db: Firestore): Promise<OpenTask[]> {
+  const snap = await db.collection("openTasks").where("done", "==", false).orderBy("dueDate").get();
+  return snap.docs.map((doc) => {
+    const data = doc.data();
+    return { id: doc.id, title: data.title, dueDate: data.dueDate ?? null };
   });
 }

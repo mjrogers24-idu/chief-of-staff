@@ -41,6 +41,14 @@ export function TodayBriefCard({ brief, loading, error }: TodayBriefCardProps) {
 
       {brief && (
         <>
+          {(brief.weatherNote || brief.prepAheadNote || brief.travelNote) && (
+            <ul className="flex flex-col gap-1 rounded bg-amber-50 p-3 text-sm text-amber-900">
+              {brief.weatherNote && <li>{brief.weatherNote}</li>}
+              {brief.prepAheadNote && <li>{brief.prepAheadNote}</li>}
+              {brief.travelNote && <li>{brief.travelNote}</li>}
+            </ul>
+          )}
+
           <section className="flex flex-col gap-2">
             <h3 className="text-xs font-semibold uppercase text-gray-400">Schedule</h3>
             {brief.scheduleItems.length === 0 ? (
@@ -80,6 +88,20 @@ export function TodayBriefCard({ brief, loading, error }: TodayBriefCardProps) {
               </ul>
             )}
           </section>
+
+          {brief.openTasks.length > 0 && (
+            <section className="flex flex-col gap-2">
+              <h3 className="text-xs font-semibold uppercase text-gray-400">Forms &amp; outstanding</h3>
+              <ul className="flex flex-col gap-1 text-sm">
+                {brief.openTasks.map((task) => (
+                  <li key={task.id}>
+                    {task.title}
+                    {task.dueDate && <span className="text-gray-400"> — due {task.dueDate}</span>}
+                  </li>
+                ))}
+              </ul>
+            </section>
+          )}
         </>
       )}
     </div>
