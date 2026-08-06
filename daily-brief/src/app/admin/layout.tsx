@@ -34,9 +34,9 @@ export default function AdminLayout({ children }: { children: ReactNode }) {
   }
 
   return (
-    <div className="mx-auto max-w-3xl px-4 py-10">
-      <div className="mb-8 flex items-center justify-between">
-        <h1 className="text-xl font-semibold">Daily Brief admin</h1>
+    <div className="mx-auto max-w-3xl px-4 py-6 sm:py-10">
+      <div className="mb-4 flex items-center justify-between sm:mb-8">
+        <h1 className="text-lg font-semibold sm:text-xl">Daily Brief admin</h1>
         <button
           onClick={() => signOut(auth)}
           className="text-sm text-gray-500 underline"
@@ -44,9 +44,13 @@ export default function AdminLayout({ children }: { children: ReactNode }) {
           Sign out
         </button>
       </div>
-      <nav className="mb-8 flex gap-4 border-b border-gray-200 pb-3 text-sm">
+      <nav className="mb-6 -mx-4 flex gap-4 overflow-x-auto whitespace-nowrap border-b border-gray-200 px-4 pb-3 text-sm sm:mb-8">
         {NAV.map((item) => (
-          <Link key={item.href} href={item.href} className="text-gray-700 hover:underline">
+          <Link
+            key={item.href}
+            href={item.href}
+            className="shrink-0 text-gray-700 hover:underline"
+          >
             {item.label}
           </Link>
         ))}
