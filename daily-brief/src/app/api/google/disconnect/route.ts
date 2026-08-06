@@ -1,22 +1,11 @@
 import { NextRequest, NextResponse } from "next/server";
-import { getAdminAuth, getAdminDb } from "@/lib/firebaseAdmin";
+import { getAdminDb } from "@/lib/firebaseAdmin";
 import { isParent } from "@/lib/googleOAuth";
-
-function bearerToken(req: NextRequest): string | null {
-  const header = req.headers.get("authorization");
-  return header?.startsWith("Bearer ") ? header.slice("Bearer ".length) : null;
-}
+import { requireAuth } from "@/lib/verifyRequestAuth";
 
 export async function POST(req: NextRequest) {
-  const idToken = bearerToken(req);
-  if (!idToken) {
-    return NextResponse.json({ error: "Missing bearer token" }, { status: 401 });
-  }
-  try {
-    await getAdminAuth().verifyIdToken(idToken);
-  } catch {
-    return NextResponse.json({ error: "Invalid token" }, { status: 401 });
-  }
+  const auth = await requireAuth(req);
+  if (auth.response) return auth.response;
 
   const body = await req.json().catch(() => null);
   const parent = body?.parent;
