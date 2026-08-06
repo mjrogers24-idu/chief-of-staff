@@ -1,0 +1,55 @@
+# Firebase App Hosting config for the daily-brief Next.js app.
+# https://firebase.google.com/docs/app-hosting/configure
+
+runConfig:
+  minInstances: 0
+  maxInstances: 1
+  concurrency: 80
+  cpu: 1
+  memoryMiB: 512
+
+env:
+  # Public Firebase Web SDK config — safe as plain values (same reasoning
+  # as .env.local.example: this is exposed to the browser by design;
+  # Firestore/Storage rules are the real security boundary, not this key).
+  - variable: NEXT_PUBLIC_FIREBASE_API_KEY
+    value: AIzaSyDAAoy6IIfPVq40SC4OpVqgq6lngwo4PAM
+    availability: [BUILD, RUNTIME]
+  - variable: NEXT_PUBLIC_FIREBASE_AUTH_DOMAIN
+    value: daily-brief-b4383.firebaseapp.com
+    availability: [BUILD, RUNTIME]
+  - variable: NEXT_PUBLIC_FIREBASE_PROJECT_ID
+    value: daily-brief-b4383
+    availability: [BUILD, RUNTIME]
+  - variable: NEXT_PUBLIC_FIREBASE_STORAGE_BUCKET
+    value: daily-brief-b4383.firebasestorage.app
+    availability: [BUILD, RUNTIME]
+  - variable: NEXT_PUBLIC_FIREBASE_MESSAGING_SENDER_ID
+    value: "1052531140945"
+    availability: [BUILD, RUNTIME]
+  - variable: NEXT_PUBLIC_FIREBASE_APP_ID
+    value: "1:1052531140945:web:30bb8471780c57d1cf0b70"
+    availability: [BUILD, RUNTIME]
+
+  # Non-secret, but not knowable until the backend exists (the URL depends
+  # on the backend ID chosen during setup). TODO: fill in with the real
+  # assigned URL, then also add "<this>/api/google/callback" to the OAuth
+  # client's authorized redirect URIs in Google Cloud Console.
+  - variable: GOOGLE_OAUTH_REDIRECT_BASE_URL
+    value: "https://REPLACE-WITH-APP-HOSTING-URL"
+    availability: [RUNTIME]
+
+  # Secrets — stored in Google Secret Manager, referenced by name here.
+  # Create each with: firebase apphosting:secrets:set <NAME>
+  - variable: FIREBASE_SERVICE_ACCOUNT_KEY
+    secret: FIREBASE_SERVICE_ACCOUNT_KEY
+    availability: [RUNTIME]
+  - variable: GOOGLE_OAUTH_CLIENT_ID
+    secret: GOOGLE_OAUTH_CLIENT_ID
+    availability: [RUNTIME]
+  - variable: GOOGLE_OAUTH_CLIENT_SECRET
+    secret: GOOGLE_OAUTH_CLIENT_SECRET
+    availability: [RUNTIME]
+  - variable: OAUTH_STATE_SECRET
+    secret: OAUTH_STATE_SECRET
+    availability: [RUNTIME]
