@@ -38,6 +38,13 @@ export interface MealDay {
   kid_version: string;
   adult_lighter_option: string;
   notes: string;
+  /** A link to the original recipe (e.g. a blog post), if one was attached. */
+  recipeUrl?: string;
+  /** Download URLs for uploaded recipe screenshots, if any were attached. */
+  recipeImageUrls?: string[];
+  /** Filled in by Gemini vision when parsing recipe screenshots, or by hand. */
+  recipeIngredients?: string[];
+  recipeInstructions?: string;
 }
 
 /** Written by the generateMealPlan Cloud Function (functions/src/generateMealPlan.ts). */

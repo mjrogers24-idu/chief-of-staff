@@ -21,17 +21,21 @@ export async function callGemini(prompt: string): Promise<string> {
   return text;
 }
 
-export async function callGeminiVision(
-  prompt: string,
-  base64Data: string,
-  mimeType: string,
-): Promise<string> {
+export interface GeminiImage {
+  base64Data: string;
+  mimeType: string;
+}
+
+export async function callGeminiVision(prompt: string, images: GeminiImage[]): Promise<string> {
   const response = await client().models.generateContent({
     model: MODEL,
     contents: [
       {
         role: "user",
-        parts: [{ text: prompt }, { inlineData: { mimeType, data: base64Data } }],
+        parts: [
+          { text: prompt },
+          ...images.map((img) => ({ inlineData: { mimeType: img.mimeType, data: img.base64Data } })),
+        ],
       },
     ],
   });

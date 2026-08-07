@@ -1,6 +1,62 @@
 "use client";
 
+import { useState } from "react";
 import { GROCERY_CATEGORY_LABELS, type MealDay, type MealPlanDoc } from "@/lib/firestore/mealPlans";
+
+function dayHasRecipe(day: MealDay): boolean {
+  return !!(
+    day.recipeUrl ||
+    (day.recipeImageUrls?.length ?? 0) > 0 ||
+    (day.recipeIngredients?.length ?? 0) > 0 ||
+    day.recipeInstructions
+  );
+}
+
+function RecipeDetails({ day }: { day: MealDay }) {
+  const [open, setOpen] = useState(false);
+  if (!dayHasRecipe(day)) return null;
+
+  return (
+    <div className="mt-2">
+      <button type="button" onClick={() => setOpen((o) => !o)} className="text-xs text-gray-700 underline">
+        {open ? "Hide recipe" : "View recipe"}
+      </button>
+      {open && (
+        <div className="mt-2 flex flex-col gap-2 rounded border border-gray-200 bg-gray-50 p-3 text-sm">
+          {day.recipeUrl && (
+            <a href={day.recipeUrl} target="_blank" rel="noopener noreferrer" className="text-blue-600 underline">
+              {day.recipeUrl}
+            </a>
+          )}
+          {(day.recipeImageUrls?.length ?? 0) > 0 && (
+            <div className="flex flex-wrap gap-2">
+              {day.recipeImageUrls!.map((url, i) => (
+                // eslint-disable-next-line @next/next/no-img-element
+                <img key={i} src={url} alt="Recipe" className="h-20 w-20 rounded object-cover" />
+              ))}
+            </div>
+          )}
+          {(day.recipeIngredients?.length ?? 0) > 0 && (
+            <div>
+              <p className="font-medium">Ingredients</p>
+              <ul className="list-inside list-disc text-gray-600">
+                {day.recipeIngredients!.map((item, i) => (
+                  <li key={i}>{item}</li>
+                ))}
+              </ul>
+            </div>
+          )}
+          {day.recipeInstructions && (
+            <div>
+              <p className="font-medium">Instructions</p>
+              <p className="whitespace-pre-wrap text-gray-600">{day.recipeInstructions}</p>
+            </div>
+          )}
+        </div>
+      )}
+    </div>
+  );
+}
 
 interface MealPlanCardProps {
   plan: MealPlanDoc | null;
@@ -91,6 +147,7 @@ export function MealPlanCard({
                   <p className="text-gray-600">Adults (lighter): {day.adult_lighter_option}</p>
                 )}
                 {day.notes && <p className="mt-1 text-gray-400">{day.notes}</p>}
+                <RecipeDetails day={day} />
               </div>
             ))}
           </section>

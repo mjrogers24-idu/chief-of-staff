@@ -8,5 +8,12 @@ service firebase.storage {
     match /daycare-calendars/{allPaths=**} {
       allow read, write: if request.auth != null;
     }
+
+    // Recipe screenshots attached to a meal-plan day (parsed via Gemini
+    // vision by parseRecipeUpload, same trust model as the daycare upload
+    // above — signed-in user only).
+    match /recipe-photos/{allPaths=**} {
+      allow read, write: if request.auth != null;
+    }
   }
 }

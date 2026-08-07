@@ -62,12 +62,13 @@ export default function MealsPage() {
   return (
     <div className="flex flex-col gap-6">
       {formMode?.kind === "add" && (
-        <MealDayForm onSubmit={handleSaveDay} onCancel={() => setFormMode(null)} />
+        <MealDayForm weekStart={weekStart} onSubmit={handleSaveDay} onCancel={() => setFormMode(null)} />
       )}
       {formMode?.kind === "edit" && (
         <MealDayForm
           initialValue={formMode.day}
           lockDay
+          weekStart={weekStart}
           onSubmit={handleSaveDay}
           onCancel={() => setFormMode(null)}
         />

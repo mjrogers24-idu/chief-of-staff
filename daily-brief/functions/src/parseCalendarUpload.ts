@@ -52,7 +52,9 @@ export const parseCalendarUpload = onCall(async (request) => {
 
   let events;
   try {
-    const raw = await callGeminiVision(composeCalendarUploadPrompt(kid, month), buffer.toString("base64"), mimeType);
+    const raw = await callGeminiVision(composeCalendarUploadPrompt(kid, month), [
+      { base64Data: buffer.toString("base64"), mimeType },
+    ]);
     events = parseCalendarUploadResponse(raw, month);
   } catch (error) {
     logger.error("Calendar upload parsing failed", error);

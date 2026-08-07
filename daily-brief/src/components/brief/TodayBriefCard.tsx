@@ -152,6 +152,21 @@ export function TodayBriefCard({ brief, loading, error }: TodayBriefCardProps) {
               {brief.dinnerTonight.adult_lighter_option && (
                 <p className="text-gray-600">Adults (lighter): {brief.dinnerTonight.adult_lighter_option}</p>
               )}
+              {brief.dinnerTonight.recipeUrl && (
+                <a
+                  href={brief.dinnerTonight.recipeUrl}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="text-blue-600 underline"
+                >
+                  View recipe
+                </a>
+              )}
+              {!brief.dinnerTonight.recipeUrl &&
+                ((brief.dinnerTonight.recipeImageUrls?.length ?? 0) > 0 ||
+                  brief.dinnerTonight.recipeInstructions) && (
+                  <p className="text-xs text-gray-400">See recipe on the Meals page</p>
+                )}
             </div>
           ) : (
             <p className="text-sm text-gray-500">No dinner planned yet — see the Meals page.</p>
