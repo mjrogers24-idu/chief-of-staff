@@ -43,6 +43,29 @@ export function addDays(date: Date, days: number): Date {
   return copy;
 }
 
+// Cloud Functions run with a UTC process timezone, so a plain `new Date()`'s
+// local getters (and toDateKey's toISOString) agree with the wall-clock
+// Eastern date only some of the time — dailyIngestion is safe because its
+// schedule is pinned to 5am Eastern, well clear of the UTC day boundary,
+// but anything triggered at an arbitrary time (e.g. generateMealPlan's
+// "Generate this week's plan" button) needs to ask explicitly.
+const TIMEZONE = "America/New_York";
+
+/** The calendar date `instant` falls on in America/New_York, as YYYY-MM-DD. */
+export function easternDateKeyFor(instant: Date): string {
+  return new Intl.DateTimeFormat("en-CA", { timeZone: TIMEZONE }).format(instant);
+}
+
+/**
+ * "Today" as a plain Date at local midnight, but anchored to the Eastern
+ * calendar date rather than the server's own UTC "now" — safe to feed into
+ * this module's local-getter-based date math (addDays, mondayOf, etc).
+ */
+export function todayInEastern(): Date {
+  const [year, month, day] = easternDateKeyFor(new Date()).split("-").map(Number);
+  return new Date(year, month - 1, day);
+}
+
 /**
  * Pure composition of a single day's brief from already-fetched data — no
  * Firestore/Google calls here, so this is fully unit-testable. The

@@ -2,7 +2,14 @@ import { initializeApp } from "firebase-admin/app";
 import { getFirestore } from "firebase-admin/firestore";
 import { logger } from "firebase-functions";
 import { onSchedule } from "firebase-functions/v2/scheduler";
-import { addDays, assembleDailyBrief, toDateKey, type BriefDocument, type DailyBrief } from "./dailyIngestion";
+import {
+  addDays,
+  assembleDailyBrief,
+  toDateKey,
+  todayInEastern,
+  type BriefDocument,
+  type DailyBrief,
+} from "./dailyIngestion";
 import { composeBriefEmail, GMAIL_SEND_SCOPE, sendBriefEmail } from "./emailBrief";
 import { composeTravelNote, computePrepAheadNote, detectTravelingParents, formatWeatherNote } from "./extras";
 import {
@@ -72,7 +79,7 @@ async function loadForecast(): Promise<Map<string, DayForecast>> {
 async function loadThisWeeksMealPlan(
   db: FirebaseFirestore.Firestore,
 ): Promise<{ days: MealDay[] } | null> {
-  const weekStart = toDateKey(mondayOf(new Date()));
+  const weekStart = toDateKey(mondayOf(todayInEastern()));
   const snap = await db.collection("mealPlans").doc(weekStart).get();
   if (!snap.exists) return null;
   return { days: (snap.data()?.days ?? []) as MealDay[] };
@@ -101,7 +108,7 @@ export const dailyIngestion = onSchedule(
   { schedule: "0 5 * * *", timeZone: TIMEZONE },
   async () => {
     const db = getFirestore();
-    const today = new Date();
+    const today = todayInEastern();
     const dates = Array.from({ length: DAYS_AHEAD }, (_, i) => addDays(today, i));
 
     const [recurringItems, rules, accounts, openTasks] = await Promise.all([

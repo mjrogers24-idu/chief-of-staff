@@ -1,6 +1,7 @@
 import { doc, getDoc, onSnapshot, setDoc } from "firebase/firestore";
 import { httpsCallable } from "firebase/functions";
 import { db, functions } from "@/lib/firebase";
+import { localDateKey } from "@/lib/dates";
 
 const COLLECTION = "mealPlans";
 
@@ -61,7 +62,7 @@ export function currentWeekStart(date: Date = new Date()): string {
   const diffToMonday = day === 0 ? -6 : 1 - day;
   const monday = new Date(date);
   monday.setDate(date.getDate() + diffToMonday);
-  return monday.toISOString().slice(0, 10);
+  return localDateKey(monday);
 }
 
 const WEEKDAY_BY_JS_DAY: (MealPlanWeekday | null)[] = [null, "Mon", "Tue", "Wed", "Thu", "Fri", null];

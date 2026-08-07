@@ -1,12 +1,13 @@
 "use client";
 
 import { useEffect, useState } from "react";
+import { localMonthKey } from "@/lib/dates";
 import { subscribeUploadedEvents, type UploadedEvent } from "@/lib/firestore/uploadedEvents";
 import { UploadForm } from "@/components/daycare/UploadForm";
 import { UploadedEventsTable } from "@/components/daycare/UploadedEventsTable";
 
 function currentMonth(): string {
-  return new Date().toISOString().slice(0, 7);
+  return localMonthKey();
 }
 
 export default function DaycarePage() {

@@ -1,5 +1,6 @@
 import { doc, onSnapshot } from "firebase/firestore";
 import { db } from "@/lib/firebase";
+import { localDateKey } from "@/lib/dates";
 import type { MealDay } from "@/lib/firestore/mealPlans";
 import type { RuleLike, ScheduleItem } from "@/lib/ruleMatcher";
 
@@ -24,7 +25,7 @@ export interface DailyBriefDoc {
 }
 
 export function todayDateKey(): string {
-  return new Date().toISOString().slice(0, 10);
+  return localDateKey();
 }
 
 export function subscribeDailyBrief(

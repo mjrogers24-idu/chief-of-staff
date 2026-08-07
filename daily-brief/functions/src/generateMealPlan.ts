@@ -1,7 +1,7 @@
 import { getFirestore } from "firebase-admin/firestore";
 import { logger } from "firebase-functions";
 import { HttpsError, onCall } from "firebase-functions/v2/https";
-import { addDays, toDateKey } from "./dailyIngestion";
+import { addDays, toDateKey, todayInEastern } from "./dailyIngestion";
 import { fetchAccounts, fetchConfirmedUploadedEvents, fetchRecurringItems, fetchRules } from "./firestoreReads";
 import { callGemini } from "./gemini";
 import { fetchMergedCalendarEvents } from "./googleCalendar";
@@ -36,7 +36,7 @@ export const generateMealPlan = onCall(async (request) => {
   }
 
   const db = getFirestore();
-  const monday = mondayOf(new Date());
+  const monday = mondayOf(todayInEastern());
   const weekStart = toDateKey(monday);
   const dates = weekdayDates(monday);
 

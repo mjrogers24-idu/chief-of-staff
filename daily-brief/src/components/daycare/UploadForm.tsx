@@ -2,9 +2,10 @@
 
 import { useRef, useState, type FormEvent } from "react";
 import { uploadDaycareCalendar } from "@/lib/calendarUpload";
+import { localMonthKey } from "@/lib/dates";
 
 function currentMonth(): string {
-  return new Date().toISOString().slice(0, 7);
+  return localMonthKey();
 }
 
 interface UploadFormProps {

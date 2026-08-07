@@ -1,6 +1,7 @@
 "use client";
 
 import { useEffect, useState } from "react";
+import { localDateKey } from "@/lib/dates";
 import { subscribeBriefRules, type BriefRule } from "@/lib/firestore/briefRules";
 import { scheduleForDate, type RecurringScheduleItem } from "@/lib/firestore/recurringSchedule";
 import { matchBriefRules, type MatchedAction, type ScheduleItem } from "@/lib/ruleMatcher";
@@ -9,15 +10,11 @@ interface BriefPreviewProps {
   scheduleItems: RecurringScheduleItem[];
 }
 
-function toDateKey(date: Date) {
-  return date.toISOString().slice(0, 10);
-}
-
 function previewFor(date: Date, scheduleItems: RecurringScheduleItem[], rules: BriefRule[]) {
   const items: ScheduleItem[] = scheduleForDate(scheduleItems, date).map((item) => ({
     id: item.id,
     title: item.label,
-    date: toDateKey(date),
+    date: localDateKey(date),
     kid: item.kid,
     source: "recurring",
   }));

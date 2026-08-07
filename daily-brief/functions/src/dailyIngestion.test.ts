@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { addDays, assembleDailyBrief, toDateKey } from "./dailyIngestion";
+import { addDays, assembleDailyBrief, easternDateKeyFor, toDateKey } from "./dailyIngestion";
 import type { CalendarEvent } from "./googleCalendar";
 import type { RecurringScheduleItem } from "./recurringSchedule";
 import type { RuleLike } from "./ruleMatcher";
@@ -76,5 +76,20 @@ describe("assembleDailyBrief", () => {
     ];
     const brief = assembleDailyBrief(monday, [], [], [], uploaded);
     expect(brief.scheduleItems).toHaveLength(0);
+  });
+});
+
+describe("easternDateKeyFor", () => {
+  it("uses the Eastern calendar date, not the UTC one", () => {
+    // 9:24pm EDT (UTC-4) on Aug 7 is 1:24am UTC on Aug 8 — a naive
+    // toISOString().slice(0, 10) would wrongly say "2026-08-08" here.
+    const instant = new Date("2026-08-08T01:24:00Z");
+    expect(easternDateKeyFor(instant)).toBe("2026-08-07");
+    expect(toDateKey(instant)).toBe("2026-08-08");
+  });
+
+  it("agrees with toDateKey well within the Eastern day (no UTC crossover)", () => {
+    const instant = new Date("2026-08-07T14:00:00Z"); // 10am EDT
+    expect(easternDateKeyFor(instant)).toBe(toDateKey(instant));
   });
 });
