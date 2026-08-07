@@ -40,6 +40,9 @@ env:
 
   # Secrets — stored in Google Secret Manager, referenced by name here.
   # Create each with: firebase apphosting:secrets:set <NAME>
+  # FIREBASE_SERVICE_ACCOUNT_KEY rotated 2026-08-07 to pick up a fresh,
+  # correctly-pasted key (secrets are pinned at deploy time, so this
+  # comment exists just to trigger a new rollout).
   - variable: FIREBASE_SERVICE_ACCOUNT_KEY
     secret: FIREBASE_SERVICE_ACCOUNT_KEY
     availability: [RUNTIME]
