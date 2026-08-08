@@ -65,6 +65,15 @@ export function currentWeekStart(date: Date = new Date()): string {
   return localDateKey(monday);
 }
 
+/** The Monday of the week after the one containing `date` — used to "repeat" a dinner forward. */
+export function nextWeekStart(date: Date = new Date()): string {
+  const day = date.getDay();
+  const diffToMonday = day === 0 ? -6 : 1 - day;
+  const nextMonday = new Date(date);
+  nextMonday.setDate(date.getDate() + diffToMonday + 7);
+  return localDateKey(nextMonday);
+}
+
 const WEEKDAY_BY_JS_DAY: (MealPlanWeekday | null)[] = [null, "Mon", "Tue", "Wed", "Thu", "Fri", null];
 
 /** This week's planned dinner for a given date, if one exists (weekends have none). */
@@ -126,6 +135,11 @@ export async function upsertMealDay(weekStart: string, day: MealDay): Promise<vo
     generatedAt: existing?.generatedAt ?? new Date().toISOString(),
   };
   await setDoc(ref, plan);
+}
+
+/** Copies a dinner onto the same weekday next week — e.g. "that was a hit, let's have it again." */
+export async function repeatMealDayNextWeek(day: MealDay): Promise<void> {
+  await upsertMealDay(nextWeekStart(), day);
 }
 
 export async function deleteMealDay(weekStart: string, day: string): Promise<void> {

@@ -40,7 +40,7 @@ export function RuleForm({ initialValue, onSubmit, onCancel }: RuleFormProps) {
   return (
     <form
       onSubmit={handleSubmit}
-      className="flex flex-col gap-3 rounded border border-gray-200 bg-gray-50 p-4"
+      className="flex flex-col gap-3 rounded border border-gray-200 dark:border-gray-700 bg-gray-50 dark:bg-gray-800/60 p-4"
     >
       <div className="grid grid-cols-2 gap-3">
         <label className="flex flex-col gap-1 text-sm">
@@ -48,7 +48,7 @@ export function RuleForm({ initialValue, onSubmit, onCancel }: RuleFormProps) {
           <input
             value={values.keyword}
             onChange={(e) => setValues((v) => ({ ...v, keyword: e.target.value }))}
-            className="rounded border border-gray-300 px-2 py-1"
+            className="rounded border border-gray-300 dark:border-gray-600 px-2 py-1"
             placeholder="e.g. PE"
             required
           />
@@ -58,7 +58,7 @@ export function RuleForm({ initialValue, onSubmit, onCancel }: RuleFormProps) {
           <input
             value={values.kid ?? ""}
             onChange={(e) => setValues((v) => ({ ...v, kid: e.target.value }))}
-            className="rounded border border-gray-300 px-2 py-1"
+            className="rounded border border-gray-300 dark:border-gray-600 px-2 py-1"
             placeholder="e.g. Josh — blank applies to any kid"
           />
         </label>
@@ -67,7 +67,7 @@ export function RuleForm({ initialValue, onSubmit, onCancel }: RuleFormProps) {
           <input
             value={values.wearNote ?? ""}
             onChange={(e) => setValues((v) => ({ ...v, wearNote: e.target.value }))}
-            className="rounded border border-gray-300 px-2 py-1"
+            className="rounded border border-gray-300 dark:border-gray-600 px-2 py-1"
             placeholder="e.g. sneakers, athletic clothes"
           />
         </label>
@@ -76,12 +76,12 @@ export function RuleForm({ initialValue, onSubmit, onCancel }: RuleFormProps) {
           <input
             value={values.dinnerFlag ?? ""}
             onChange={(e) => setValues((v) => ({ ...v, dinnerFlag: e.target.value }))}
-            className="rounded border border-gray-300 px-2 py-1"
+            className="rounded border border-gray-300 dark:border-gray-600 px-2 py-1"
             placeholder="e.g. quick-prep"
           />
         </label>
       </div>
-      {error && <p className="text-sm text-red-600">{error}</p>}
+      {error && <p className="text-sm text-red-600 dark:text-red-400">{error}</p>}
       <div className="flex gap-2">
         <button
           type="submit"
@@ -93,7 +93,7 @@ export function RuleForm({ initialValue, onSubmit, onCancel }: RuleFormProps) {
         <button
           type="button"
           onClick={onCancel}
-          className="rounded px-3 py-1.5 text-sm text-gray-600"
+          className="rounded px-3 py-1.5 text-sm text-gray-600 dark:text-gray-400"
         >
           Cancel
         </button>

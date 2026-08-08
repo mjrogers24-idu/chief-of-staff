@@ -45,7 +45,7 @@ export default function TasksPage() {
   return (
     <div className="flex flex-col gap-6">
       <div className="flex items-center justify-between">
-        <p className="text-sm text-gray-500">
+        <p className="text-sm text-gray-500 dark:text-gray-400">
           Outstanding forms/paperwork — surfaced in the brief until marked done.
         </p>
         {!formMode && (
@@ -67,8 +67,8 @@ export default function TasksPage() {
         />
       )}
 
-      {loading && <p className="text-sm text-gray-500">Loading…</p>}
-      {error && <p className="text-sm text-red-600">{error}</p>}
+      {loading && <p className="text-sm text-gray-500 dark:text-gray-400">Loading…</p>}
+      {error && <p className="text-sm text-red-600 dark:text-red-400">{error}</p>}
       {!loading && !error && (
         <TasksTable tasks={tasks} onEdit={(task) => setFormMode({ kind: "edit", task })} />
       )}

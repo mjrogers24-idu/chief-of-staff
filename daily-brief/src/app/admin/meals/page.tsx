@@ -5,6 +5,7 @@ import {
   currentWeekStart,
   deleteMealDay,
   generateMealPlan,
+  repeatMealDayNextWeek,
   subscribeMealPlan,
   upsertMealDay,
   type MealDay,
@@ -21,6 +22,8 @@ export default function MealsPage() {
   const [error, setError] = useState<string | null>(null);
   const [generating, setGenerating] = useState(false);
   const [formMode, setFormMode] = useState<FormMode>(null);
+  const [repeatingDay, setRepeatingDay] = useState<string | null>(null);
+  const [notice, setNotice] = useState<string | null>(null);
   const weekStart = currentWeekStart();
 
   useEffect(() => {
@@ -42,8 +45,12 @@ export default function MealsPage() {
     setError(null);
     try {
       await generateMealPlan();
-    } catch {
-      setError("Couldn't generate a plan. Try again.");
+    } catch (err) {
+      // The Cloud Function now distinguishes "couldn't reach the AI" from
+      // "got a response but couldn't parse it" — show that instead of a
+      // generic message when the callable SDK gives us one.
+      const message = err instanceof Error && err.message ? err.message : "Couldn't generate a plan. Try again.";
+      setError(message);
     } finally {
       setGenerating(false);
     }
@@ -57,6 +64,19 @@ export default function MealsPage() {
   async function handleDeleteDay(day: MealDay) {
     if (!confirm(`Delete ${day.day}'s dinner (${day.meal})?`)) return;
     await deleteMealDay(weekStart, day.day);
+  }
+
+  async function handleRepeatDay(day: MealDay) {
+    setRepeatingDay(day.day);
+    setNotice(null);
+    try {
+      await repeatMealDayNextWeek(day);
+      setNotice(`Added "${day.meal}" to next week's ${day.day}.`);
+    } catch {
+      setError("Couldn't add that to next week. Try again.");
+    } finally {
+      setRepeatingDay(null);
+    }
   }
 
   return (
@@ -75,16 +95,25 @@ export default function MealsPage() {
       )}
 
       {!formMode && (
-        <MealPlanCard
-          plan={plan}
-          loading={loading}
-          error={error}
-          generating={generating}
-          onGenerate={handleGenerate}
-          onAddDay={() => setFormMode({ kind: "add" })}
-          onEditDay={(day) => setFormMode({ kind: "edit", day })}
-          onDeleteDay={handleDeleteDay}
-        />
+        <>
+          {notice && (
+            <p className="rounded bg-sage-100 px-3 py-2 text-sm text-sage-800 dark:bg-sage-900/30 dark:text-sage-300">
+              {notice}
+            </p>
+          )}
+          <MealPlanCard
+            plan={plan}
+            loading={loading}
+            error={error}
+            generating={generating}
+            repeatingDay={repeatingDay}
+            onGenerate={handleGenerate}
+            onAddDay={() => setFormMode({ kind: "add" })}
+            onEditDay={(day) => setFormMode({ kind: "edit", day })}
+            onDeleteDay={handleDeleteDay}
+            onRepeatDay={handleRepeatDay}
+          />
+        </>
       )}
     </div>
   );

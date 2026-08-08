@@ -5,6 +5,21 @@
 :root {
   --background: #faf6f3;
   --foreground: #171717;
+  color-scheme: light;
+}
+
+/*
+ * Gated behind an explicit .dark class on <html> (set by ThemeProvider),
+ * never prefers-color-scheme directly — the app used to follow system
+ * dark mode automatically, which silently made text invisible on every
+ * card built with light-only colors, since nothing in the component tree
+ * had a matching dark: variant. Every component now carries its own
+ * dark: classes, so this is safe to flip explicitly.
+ */
+.dark {
+  --background: #171717;
+  --foreground: #f3f3f3;
+  color-scheme: dark;
 }
 
 body {

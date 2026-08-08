@@ -44,15 +44,15 @@ export function BriefPreview({ scheduleItems }: BriefPreviewProps) {
   ];
 
   return (
-    <div className="flex flex-col gap-4 rounded border border-gray-200 p-4">
-      <h2 className="text-sm font-medium text-gray-700">
-        Brief preview <span className="font-normal text-gray-400">(recurring schedule only)</span>
+    <div className="flex flex-col gap-4 rounded border border-gray-200 dark:border-gray-700 p-4">
+      <h2 className="text-sm font-medium text-gray-700 dark:text-gray-300">
+        Brief preview <span className="font-normal text-gray-400 dark:text-gray-500">(recurring schedule only)</span>
       </h2>
       {days.map((day) => (
         <div key={day.label}>
-          <h3 className="text-xs font-semibold uppercase text-gray-400">{day.label}</h3>
+          <h3 className="text-xs font-semibold uppercase text-gray-400 dark:text-gray-500">{day.label}</h3>
           {day.matches.length === 0 ? (
-            <p className="text-sm text-gray-500">Nothing flagged.</p>
+            <p className="text-sm text-gray-500 dark:text-gray-400">Nothing flagged.</p>
           ) : (
             <ul className="mt-1 flex flex-col gap-1 text-sm">
               {day.matches.map((match, i) => (

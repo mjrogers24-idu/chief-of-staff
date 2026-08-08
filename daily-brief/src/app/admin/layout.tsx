@@ -37,7 +37,7 @@ export default function AdminLayout({ children }: { children: ReactNode }) {
 
   if (loading || !user) {
     return (
-      <main className="mx-auto max-w-3xl px-4 py-10 text-sm text-gray-500">
+      <main className="mx-auto max-w-3xl px-4 py-10 text-sm text-gray-500 dark:text-gray-400">
         Loading…
       </main>
     );
@@ -49,12 +49,12 @@ export default function AdminLayout({ children }: { children: ReactNode }) {
         <span className="flex h-8 w-8 items-center justify-center rounded-xl bg-brand-600 text-sm font-semibold text-white">
           D
         </span>
-        <h1 className="text-lg font-semibold text-gray-900">Daily Brief</h1>
+        <h1 className="text-lg font-semibold text-gray-900 dark:text-gray-100">Daily Brief</h1>
       </header>
 
       <main className="mx-auto max-w-3xl px-4">{children}</main>
 
-      <nav className="fixed inset-x-0 bottom-0 z-10 border-t border-gray-200 bg-white/95 backdrop-blur">
+      <nav className="fixed inset-x-0 bottom-0 z-10 border-t border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-800/95 backdrop-blur">
         <div className="mx-auto flex max-w-3xl justify-around px-2 pb-[env(safe-area-inset-bottom)] pt-1.5">
           {TABS.map((tab) => {
             const active = pathname === tab.href || tab.matchPrefixes?.some((p) => pathname?.startsWith(p));
@@ -63,7 +63,7 @@ export default function AdminLayout({ children }: { children: ReactNode }) {
                 key={tab.href}
                 href={tab.href}
                 className={`flex flex-1 flex-col items-center gap-0.5 rounded-lg px-2 py-2 text-xs ${
-                  active ? "text-brand-600" : "text-gray-400"
+                  active ? "text-brand-600" : "text-gray-400 dark:text-gray-500"
                 }`}
               >
                 <tab.icon size={20} strokeWidth={active ? 2.5 : 2} />

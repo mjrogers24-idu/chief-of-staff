@@ -53,7 +53,7 @@ export function ScheduleForm({ initialValue, onSubmit, onCancel }: ScheduleFormP
   return (
     <form
       onSubmit={handleSubmit}
-      className="flex flex-col gap-3 rounded border border-gray-200 bg-gray-50 p-4"
+      className="flex flex-col gap-3 rounded border border-gray-200 dark:border-gray-700 bg-gray-50 dark:bg-gray-800/60 p-4"
     >
       <div className="grid grid-cols-2 gap-3">
         <label className="flex flex-col gap-1 text-sm">
@@ -61,7 +61,7 @@ export function ScheduleForm({ initialValue, onSubmit, onCancel }: ScheduleFormP
           <input
             value={values.kid}
             onChange={(e) => setValues((v) => ({ ...v, kid: e.target.value }))}
-            className="rounded border border-gray-300 px-2 py-1"
+            className="rounded border border-gray-300 dark:border-gray-600 px-2 py-1"
             placeholder="e.g. Josh"
             required
           />
@@ -71,7 +71,7 @@ export function ScheduleForm({ initialValue, onSubmit, onCancel }: ScheduleFormP
           <input
             value={values.label}
             onChange={(e) => setValues((v) => ({ ...v, label: e.target.value }))}
-            className="rounded border border-gray-300 px-2 py-1"
+            className="rounded border border-gray-300 dark:border-gray-600 px-2 py-1"
             placeholder="e.g. PE, Lunch, Specials"
             required
           />
@@ -89,7 +89,7 @@ export function ScheduleForm({ initialValue, onSubmit, onCancel }: ScheduleFormP
               className={`rounded border px-2 py-1 text-xs ${
                 values.daysOfWeek.includes(day)
                   ? "border-brand-600 bg-brand-600 text-white"
-                  : "border-gray-300 text-gray-600"
+                  : "border-gray-300 dark:border-gray-600 text-gray-600 dark:text-gray-400"
               }`}
             >
               {day}
@@ -103,12 +103,12 @@ export function ScheduleForm({ initialValue, onSubmit, onCancel }: ScheduleFormP
         <input
           value={values.note ?? ""}
           onChange={(e) => setValues((v) => ({ ...v, note: e.target.value }))}
-          className="rounded border border-gray-300 px-2 py-1"
+          className="rounded border border-gray-300 dark:border-gray-600 px-2 py-1"
           placeholder="e.g. lunch at 11:40, art/music/PE rotation"
         />
       </label>
 
-      {error && <p className="text-sm text-red-600">{error}</p>}
+      {error && <p className="text-sm text-red-600 dark:text-red-400">{error}</p>}
       <div className="flex gap-2">
         <button
           type="submit"
@@ -120,7 +120,7 @@ export function ScheduleForm({ initialValue, onSubmit, onCancel }: ScheduleFormP
         <button
           type="button"
           onClick={onCancel}
-          className="rounded px-3 py-1.5 text-sm text-gray-600"
+          className="rounded px-3 py-1.5 text-sm text-gray-600 dark:text-gray-400"
         >
           Cancel
         </button>

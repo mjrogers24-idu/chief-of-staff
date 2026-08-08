@@ -83,18 +83,18 @@ function CalendarsPageInner() {
 
   return (
     <div className="flex flex-col gap-6">
-      <p className="text-sm text-gray-500">
+      <p className="text-sm text-gray-500 dark:text-gray-400">
         Read-only access to each parent&apos;s Google Calendar, used to pull one-off events
         (practices, field trips, appointments) into the brief. Michelle&apos;s connection also
         grants permission to send the morning brief email — her consent screen will list an
         extra &quot;send email&quot; permission that Dan&apos;s doesn&apos;t.
       </p>
 
-      {notice && <p className="rounded bg-gray-100 px-3 py-2 text-sm text-gray-700">{notice}</p>}
-      {error && <p className="text-sm text-red-600">{error}</p>}
+      {notice && <p className="rounded bg-gray-100 dark:bg-gray-700 px-3 py-2 text-sm text-gray-700 dark:text-gray-300">{notice}</p>}
+      {error && <p className="text-sm text-red-600 dark:text-red-400">{error}</p>}
 
       {accounts === null && !error ? (
-        <p className="text-sm text-gray-500">Loading…</p>
+        <p className="text-sm text-gray-500 dark:text-gray-400">Loading…</p>
       ) : (
         <div className="flex flex-col gap-3">
           {PARENTS.map((parent) => {
@@ -103,11 +103,11 @@ function CalendarsPageInner() {
             return (
               <div
                 key={parent}
-                className="flex items-center justify-between rounded border border-gray-200 p-4"
+                className="flex items-center justify-between rounded border border-gray-200 dark:border-gray-700 p-4"
               >
                 <div>
                   <p className="font-medium">{PARENT_LABEL[parent]}</p>
-                  <p className="text-sm text-gray-500">
+                  <p className="text-sm text-gray-500 dark:text-gray-400">
                     {connected ? account?.email || "Connected" : "Not connected"}
                   </p>
                 </div>
@@ -115,7 +115,7 @@ function CalendarsPageInner() {
                   <button
                     onClick={() => handleDisconnect(parent)}
                     disabled={busyParent === parent}
-                    className="rounded border border-gray-300 px-3 py-1.5 text-sm disabled:opacity-50"
+                    className="rounded border border-gray-300 dark:border-gray-600 px-3 py-1.5 text-sm disabled:opacity-50"
                   >
                     Disconnect
                   </button>
@@ -139,7 +139,7 @@ function CalendarsPageInner() {
 
 export default function CalendarsPage() {
   return (
-    <Suspense fallback={<p className="text-sm text-gray-500">Loading…</p>}>
+    <Suspense fallback={<p className="text-sm text-gray-500 dark:text-gray-400">Loading…</p>}>
       <CalendarsPageInner />
     </Suspense>
   );

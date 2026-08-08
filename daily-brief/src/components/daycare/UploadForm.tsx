@@ -42,14 +42,14 @@ export function UploadForm({ kid, month, onKidChange, onMonthChange, onParsed }:
   }
 
   return (
-    <form onSubmit={handleSubmit} className="flex flex-col gap-3 rounded border border-gray-200 p-4">
+    <form onSubmit={handleSubmit} className="flex flex-col gap-3 rounded border border-gray-200 dark:border-gray-700 p-4">
       <div className="grid grid-cols-2 gap-3">
         <label className="flex flex-col gap-1 text-sm">
           Kid
           <input
             value={kid}
             onChange={(e) => onKidChange(e.target.value)}
-            className="rounded border border-gray-300 px-2 py-1"
+            className="rounded border border-gray-300 dark:border-gray-600 px-2 py-1"
           />
         </label>
         <label className="flex flex-col gap-1 text-sm">
@@ -58,7 +58,7 @@ export function UploadForm({ kid, month, onKidChange, onMonthChange, onParsed }:
             type="month"
             value={month || currentMonth()}
             onChange={(e) => onMonthChange(e.target.value)}
-            className="rounded border border-gray-300 px-2 py-1"
+            className="rounded border border-gray-300 dark:border-gray-600 px-2 py-1"
           />
         </label>
       </div>
@@ -71,7 +71,7 @@ export function UploadForm({ kid, month, onKidChange, onMonthChange, onParsed }:
           className="text-sm"
         />
       </label>
-      {error && <p className="text-sm text-red-600">{error}</p>}
+      {error && <p className="text-sm text-red-600 dark:text-red-400">{error}</p>}
       <button
         type="submit"
         disabled={uploading}
@@ -79,7 +79,7 @@ export function UploadForm({ kid, month, onKidChange, onMonthChange, onParsed }:
       >
         {uploading ? "Uploading & parsing…" : "Upload & parse"}
       </button>
-      <p className="text-xs text-gray-400">
+      <p className="text-xs text-gray-400 dark:text-gray-500">
         Re-uploading for the same kid and month replaces whatever was parsed there before.
       </p>
     </form>

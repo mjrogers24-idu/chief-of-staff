@@ -35,7 +35,7 @@ export function TaskForm({ initialValue, onSubmit, onCancel }: TaskFormProps) {
   return (
     <form
       onSubmit={handleSubmit}
-      className="flex flex-col gap-3 rounded border border-gray-200 bg-gray-50 p-4"
+      className="flex flex-col gap-3 rounded border border-gray-200 dark:border-gray-700 bg-gray-50 dark:bg-gray-800/60 p-4"
     >
       <div className="grid grid-cols-2 gap-3">
         <label className="flex flex-col gap-1 text-sm">
@@ -43,7 +43,7 @@ export function TaskForm({ initialValue, onSubmit, onCancel }: TaskFormProps) {
           <input
             value={values.title}
             onChange={(e) => setValues((v) => ({ ...v, title: e.target.value }))}
-            className="rounded border border-gray-300 px-2 py-1"
+            className="rounded border border-gray-300 dark:border-gray-600 px-2 py-1"
             placeholder="e.g. Field trip permission slip"
             required
           />
@@ -54,11 +54,11 @@ export function TaskForm({ initialValue, onSubmit, onCancel }: TaskFormProps) {
             type="date"
             value={values.dueDate ?? ""}
             onChange={(e) => setValues((v) => ({ ...v, dueDate: e.target.value || null }))}
-            className="rounded border border-gray-300 px-2 py-1"
+            className="rounded border border-gray-300 dark:border-gray-600 px-2 py-1"
           />
         </label>
       </div>
-      {error && <p className="text-sm text-red-600">{error}</p>}
+      {error && <p className="text-sm text-red-600 dark:text-red-400">{error}</p>}
       <div className="flex gap-2">
         <button
           type="submit"
@@ -67,7 +67,7 @@ export function TaskForm({ initialValue, onSubmit, onCancel }: TaskFormProps) {
         >
           {submitting ? "Saving…" : "Save"}
         </button>
-        <button type="button" onClick={onCancel} className="rounded px-3 py-1.5 text-sm text-gray-600">
+        <button type="button" onClick={onCancel} className="rounded px-3 py-1.5 text-sm text-gray-600 dark:text-gray-400">
           Cancel
         </button>
       </div>

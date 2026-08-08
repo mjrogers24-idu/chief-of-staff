@@ -80,7 +80,7 @@ export function MealDayForm({ initialValue, lockDay, weekStart, onSubmit, onCanc
   return (
     <form
       onSubmit={handleSubmit}
-      className="flex flex-col gap-3 rounded border border-gray-200 bg-gray-50 p-4"
+      className="flex flex-col gap-3 rounded border border-gray-200 dark:border-gray-700 bg-gray-50 dark:bg-gray-800/60 p-4"
     >
       <div className="grid grid-cols-2 gap-3">
         <label className="flex flex-col gap-1 text-sm">
@@ -89,7 +89,7 @@ export function MealDayForm({ initialValue, lockDay, weekStart, onSubmit, onCanc
             value={values.day}
             disabled={lockDay}
             onChange={(e) => setValues((v) => ({ ...v, day: e.target.value }))}
-            className="rounded border border-gray-300 px-2 py-1 disabled:bg-gray-100"
+            className="rounded border border-gray-300 px-2 py-1 disabled:bg-gray-100 dark:border-gray-600 dark:disabled:bg-gray-700"
           >
             {MEAL_PLAN_WEEKDAYS.map((day) => (
               <option key={day} value={day}>
@@ -103,7 +103,7 @@ export function MealDayForm({ initialValue, lockDay, weekStart, onSubmit, onCanc
           <input
             value={values.meal}
             onChange={(e) => setValues((v) => ({ ...v, meal: e.target.value }))}
-            className="rounded border border-gray-300 px-2 py-1"
+            className="rounded border border-gray-300 dark:border-gray-600 px-2 py-1"
             placeholder="e.g. Tacos (build-your-own)"
             required
           />
@@ -115,7 +115,7 @@ export function MealDayForm({ initialValue, lockDay, weekStart, onSubmit, onCanc
             min={0}
             value={values.time_minutes || ""}
             onChange={(e) => setValues((v) => ({ ...v, time_minutes: Number(e.target.value) || 0 }))}
-            className="rounded border border-gray-300 px-2 py-1"
+            className="rounded border border-gray-300 dark:border-gray-600 px-2 py-1"
           />
         </label>
         <label className="flex flex-col gap-1 text-sm">
@@ -123,7 +123,7 @@ export function MealDayForm({ initialValue, lockDay, weekStart, onSubmit, onCanc
           <input
             value={values.prep_type}
             onChange={(e) => setValues((v) => ({ ...v, prep_type: e.target.value }))}
-            className="rounded border border-gray-300 px-2 py-1"
+            className="rounded border border-gray-300 dark:border-gray-600 px-2 py-1"
             placeholder="e.g. slow-cooker"
           />
         </label>
@@ -132,7 +132,7 @@ export function MealDayForm({ initialValue, lockDay, weekStart, onSubmit, onCanc
           <input
             value={values.kid_version}
             onChange={(e) => setValues((v) => ({ ...v, kid_version: e.target.value }))}
-            className="rounded border border-gray-300 px-2 py-1"
+            className="rounded border border-gray-300 dark:border-gray-600 px-2 py-1"
           />
         </label>
         <label className="flex flex-col gap-1 text-sm">
@@ -140,7 +140,7 @@ export function MealDayForm({ initialValue, lockDay, weekStart, onSubmit, onCanc
           <input
             value={values.adult_lighter_option}
             onChange={(e) => setValues((v) => ({ ...v, adult_lighter_option: e.target.value }))}
-            className="rounded border border-gray-300 px-2 py-1"
+            className="rounded border border-gray-300 dark:border-gray-600 px-2 py-1"
           />
         </label>
       </div>
@@ -149,19 +149,19 @@ export function MealDayForm({ initialValue, lockDay, weekStart, onSubmit, onCanc
         <input
           value={values.notes}
           onChange={(e) => setValues((v) => ({ ...v, notes: e.target.value }))}
-          className="rounded border border-gray-300 px-2 py-1"
+          className="rounded border border-gray-300 dark:border-gray-600 px-2 py-1"
         />
       </label>
 
-      <div className="flex flex-col gap-3 rounded border border-gray-200 bg-white p-3">
-        <p className="text-xs font-semibold uppercase text-gray-400">Recipe (optional)</p>
+      <div className="flex flex-col gap-3 rounded border border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-800 p-3">
+        <p className="text-xs font-semibold uppercase text-gray-400 dark:text-gray-500">Recipe (optional)</p>
         <label className="flex flex-col gap-1 text-sm">
           Link to the recipe
           <input
             type="url"
             value={values.recipeUrl ?? ""}
             onChange={(e) => setValues((v) => ({ ...v, recipeUrl: e.target.value }))}
-            className="rounded border border-gray-300 px-2 py-1"
+            className="rounded border border-gray-300 dark:border-gray-600 px-2 py-1"
             placeholder="https://..."
           />
         </label>
@@ -173,12 +173,12 @@ export function MealDayForm({ initialValue, lockDay, weekStart, onSubmit, onCanc
               type="button"
               onClick={handleReadPhotos}
               disabled={parsingPhotos}
-              className="shrink-0 rounded border border-gray-300 px-2 py-1 text-xs disabled:opacity-50"
+              className="shrink-0 rounded border border-gray-300 dark:border-gray-600 px-2 py-1 text-xs disabled:opacity-50"
             >
               {parsingPhotos ? "Reading recipe…" : "Read recipe from photos"}
             </button>
           </div>
-          {photoError && <p className="text-xs text-red-600">{photoError}</p>}
+          {photoError && <p className="text-xs text-red-600 dark:text-red-400">{photoError}</p>}
           {(values.recipeImageUrls?.length ?? 0) > 0 && (
             <div className="flex flex-wrap gap-2">
               {values.recipeImageUrls!.map((url, i) => (
@@ -199,7 +199,7 @@ export function MealDayForm({ initialValue, lockDay, weekStart, onSubmit, onCanc
               }))
             }
             rows={3}
-            className="rounded border border-gray-300 px-2 py-1"
+            className="rounded border border-gray-300 dark:border-gray-600 px-2 py-1"
           />
         </label>
         <label className="flex flex-col gap-1 text-sm">
@@ -208,12 +208,12 @@ export function MealDayForm({ initialValue, lockDay, weekStart, onSubmit, onCanc
             value={values.recipeInstructions ?? ""}
             onChange={(e) => setValues((v) => ({ ...v, recipeInstructions: e.target.value }))}
             rows={3}
-            className="rounded border border-gray-300 px-2 py-1"
+            className="rounded border border-gray-300 dark:border-gray-600 px-2 py-1"
           />
         </label>
       </div>
 
-      {error && <p className="text-sm text-red-600">{error}</p>}
+      {error && <p className="text-sm text-red-600 dark:text-red-400">{error}</p>}
       <div className="flex gap-2">
         <button
           type="submit"
@@ -222,7 +222,7 @@ export function MealDayForm({ initialValue, lockDay, weekStart, onSubmit, onCanc
         >
           {submitting ? "Saving…" : "Save"}
         </button>
-        <button type="button" onClick={onCancel} className="rounded px-3 py-1.5 text-sm text-gray-600">
+        <button type="button" onClick={onCancel} className="rounded px-3 py-1.5 text-sm text-gray-600 dark:text-gray-400">
           Cancel
         </button>
       </div>

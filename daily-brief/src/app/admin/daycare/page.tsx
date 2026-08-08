@@ -36,7 +36,7 @@ export default function DaycarePage() {
 
   return (
     <div className="flex flex-col gap-6">
-      <p className="text-sm text-gray-500">
+      <p className="text-sm text-gray-500 dark:text-gray-400">
         Upload Jake&apos;s monthly daycare calendar to have dress-up days and other flagged days
         parsed automatically and matched against the rules below.
       </p>
@@ -49,9 +49,9 @@ export default function DaycarePage() {
         onParsed={(count) => setNotice(`Parsed ${count} event${count === 1 ? "" : "s"} — review below.`)}
       />
 
-      {notice && <p className="rounded bg-gray-100 px-3 py-2 text-sm text-gray-700">{notice}</p>}
-      {loading && <p className="text-sm text-gray-500">Loading…</p>}
-      {error && <p className="text-sm text-red-600">{error}</p>}
+      {notice && <p className="rounded bg-gray-100 dark:bg-gray-700 px-3 py-2 text-sm text-gray-700 dark:text-gray-300">{notice}</p>}
+      {loading && <p className="text-sm text-gray-500 dark:text-gray-400">Loading…</p>}
+      {error && <p className="text-sm text-red-600 dark:text-red-400">{error}</p>}
 
       {!loading && !error && <UploadedEventsTable events={events} />}
     </div>

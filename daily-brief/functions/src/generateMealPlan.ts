@@ -71,13 +71,27 @@ export const generateMealPlan = onCall(async (request) => {
 
   const prompt = composeMealPrompt(busyNights, recentMeals);
 
+  // Split so Cloud Logging shows which stage actually failed: the Gemini
+  // call itself (bad/missing GEMINI_API_KEY, quota, model unavailable —
+  // logged with the raw error) vs. Gemini responding but not in the
+  // expected JSON shape (logged with the raw response text, since the
+  // parse error message alone doesn't say what the model actually sent
+  // back). Both used to collapse into the same generic "Couldn't
+  // generate a meal plan" with no way to tell them apart from outside.
+  let raw: string;
+  try {
+    raw = await callGemini(prompt);
+  } catch (error) {
+    logger.error("generateMealPlan: Gemini call failed", error);
+    throw new HttpsError("internal", "Couldn't reach the meal-planning AI. Try again.");
+  }
+
   let parsed;
   try {
-    const raw = await callGemini(prompt);
     parsed = parseMealPlanResponse(raw);
   } catch (error) {
-    logger.error("Meal plan generation failed", error);
-    throw new HttpsError("internal", "Couldn't generate a meal plan. Try again.");
+    logger.error("generateMealPlan: couldn't parse Gemini's response", { error, raw });
+    throw new HttpsError("internal", "Got a response but couldn't make sense of it. Try again.");
   }
 
   const plan: MealPlan = {

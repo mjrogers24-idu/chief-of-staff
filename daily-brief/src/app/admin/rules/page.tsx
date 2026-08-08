@@ -62,7 +62,7 @@ export default function RulesPage() {
   return (
     <div className="flex flex-col gap-6">
       <div className="flex items-center justify-between">
-        <p className="text-sm text-gray-500">
+        <p className="text-sm text-gray-500 dark:text-gray-400">
           Keyword → prep-note rules matched against today&apos;s schedule and events.
         </p>
         {!formMode && (
@@ -86,8 +86,8 @@ export default function RulesPage() {
         />
       )}
 
-      {loading && <p className="text-sm text-gray-500">Loading…</p>}
-      {error && <p className="text-sm text-red-600">{error}</p>}
+      {loading && <p className="text-sm text-gray-500 dark:text-gray-400">Loading…</p>}
+      {error && <p className="text-sm text-red-600 dark:text-red-400">{error}</p>}
 
       {!loading && !error && (
         <>
@@ -95,7 +95,7 @@ export default function RulesPage() {
             <button
               onClick={handleSeed}
               disabled={seeding}
-              className="self-start rounded border border-gray-300 px-3 py-1.5 text-sm disabled:opacity-50"
+              className="self-start rounded border border-gray-300 dark:border-gray-600 px-3 py-1.5 text-sm disabled:opacity-50"
             >
               {seeding ? "Loading starter rules…" : "Load starter rules"}
             </button>

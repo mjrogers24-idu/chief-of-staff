@@ -63,7 +63,7 @@ export default function SchedulePage() {
   return (
     <div className="flex flex-col gap-6">
       <div className="flex items-center justify-between">
-        <p className="text-sm text-gray-500">
+        <p className="text-sm text-gray-500 dark:text-gray-400">
           Recurring weekly schedule per kid — gym days, lunch times, specials rotation.
         </p>
         {!formMode && (
@@ -87,8 +87,8 @@ export default function SchedulePage() {
         />
       )}
 
-      {loading && <p className="text-sm text-gray-500">Loading…</p>}
-      {error && <p className="text-sm text-red-600">{error}</p>}
+      {loading && <p className="text-sm text-gray-500 dark:text-gray-400">Loading…</p>}
+      {error && <p className="text-sm text-red-600 dark:text-red-400">{error}</p>}
 
       {!loading && !error && (
         <>
@@ -96,7 +96,7 @@ export default function SchedulePage() {
             <button
               onClick={handleSeed}
               disabled={seeding}
-              className="self-start rounded border border-gray-300 px-3 py-1.5 text-sm disabled:opacity-50"
+              className="self-start rounded border border-gray-300 dark:border-gray-600 px-3 py-1.5 text-sm disabled:opacity-50"
             >
               {seeding ? "Loading starter schedule…" : "Load starter schedule"}
             </button>
