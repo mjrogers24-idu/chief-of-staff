@@ -75,7 +75,7 @@ export function UploadForm({ kid, month, onKidChange, onMonthChange, onParsed }:
       <button
         type="submit"
         disabled={uploading}
-        className="self-start rounded bg-gray-900 px-3 py-1.5 text-sm font-medium text-white disabled:opacity-50"
+        className="self-start rounded-lg bg-brand-600 px-3 py-1.5 text-sm font-medium text-white hover:bg-brand-700 disabled:opacity-50"
       >
         {uploading ? "Uploading & parsing…" : "Upload & parse"}
       </button>

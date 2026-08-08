@@ -1,6 +1,7 @@
 import {
   AlertTriangle,
   CalendarDays,
+  CheckCircle2,
   ChefHat,
   ClipboardList,
   Circle,
@@ -12,10 +13,13 @@ import {
 } from "lucide-react";
 import { Fragment } from "react";
 import type { DailyBriefDoc, MatchedActionDoc } from "@/lib/firestore/dailyBriefs";
+import { MEAL_PLAN_WEEKDAYS, type MealPlanDoc } from "@/lib/firestore/mealPlans";
 import { Widget } from "./Widget";
 
 interface TodayBriefCardProps {
   brief: DailyBriefDoc | null;
+  mealPlan?: MealPlanDoc | null;
+  displayName?: string | null;
   loading?: boolean;
   error?: string | null;
 }
@@ -26,9 +30,15 @@ const SOURCE_LABEL: Record<string, string> = {
   "uploaded-calendar": "Daycare",
 };
 
-function formatDate(dateKey: string) {
-  const [year, month, day] = dateKey.split("-").map(Number);
-  return new Date(year, month - 1, day).toLocaleDateString(undefined, {
+function greeting(): string {
+  const hour = new Date().getHours();
+  if (hour < 12) return "Good morning";
+  if (hour < 17) return "Good afternoon";
+  return "Good evening";
+}
+
+function formatToday(): string {
+  return new Date().toLocaleDateString(undefined, {
     weekday: "long",
     month: "long",
     day: "numeric",
@@ -39,41 +49,91 @@ function actionsForItem(itemId: string, actions: MatchedActionDoc[]) {
   return actions.filter((a) => a.item.id === itemId);
 }
 
-export function TodayBriefCard({ brief, loading, error }: TodayBriefCardProps) {
+function StatTile({ value, label, accent }: { value: string | number; label: string; accent: string }) {
+  return (
+    <div className={`flex flex-1 flex-col items-center gap-0.5 rounded-2xl px-2 py-3 ${accent}`}>
+      <span className="text-xl font-semibold">{value}</span>
+      <span className="text-center text-[11px] leading-tight opacity-80">{label}</span>
+    </div>
+  );
+}
+
+export function TodayBriefCard({ brief, mealPlan, displayName, loading, error }: TodayBriefCardProps) {
+  const header = (
+    <div className="flex flex-wrap items-center justify-between gap-2 px-1">
+      <div>
+        <h2 className="text-xl font-semibold text-gray-900">
+          {greeting()}
+          {displayName ? `, ${displayName}` : ""}!
+        </h2>
+        <p className="text-sm text-gray-500">{formatToday()}</p>
+      </div>
+      {brief?.weatherNote && (
+        <span className="flex items-center gap-1.5 rounded-full bg-sky-50 px-3 py-1.5 text-xs font-medium text-sky-700">
+          <CloudSun size={14} />
+          {brief.weatherNote}
+        </span>
+      )}
+    </div>
+  );
+
   if (loading) {
-    return <p className="px-1 text-sm text-gray-500">Loading…</p>;
+    return (
+      <div className="flex flex-col gap-4">
+        {header}
+        <p className="px-1 text-sm text-gray-500">Loading…</p>
+      </div>
+    );
   }
   if (error) {
-    return <p className="px-1 text-sm text-red-600">{error}</p>;
+    return (
+      <div className="flex flex-col gap-4">
+        {header}
+        <p className="px-1 text-sm text-red-600">{error}</p>
+      </div>
+    );
   }
   if (!brief) {
     return (
-      <p className="px-1 text-sm text-gray-500">
-        No brief yet for today. The ingestion job runs at 5am — if it&apos;s already past that
-        and nothing&apos;s here, check that it&apos;s deployed and connected.
-      </p>
+      <div className="flex flex-col gap-4">
+        {header}
+        <p className="px-1 text-sm text-gray-500">
+          No brief yet for today. The ingestion job runs at 5am — if it&apos;s already past that
+          and nothing&apos;s here, check that it&apos;s deployed and connected.
+        </p>
+      </div>
     );
   }
 
-  const highlights = [
-    brief.prepAheadNote && { icon: AlertTriangle, text: brief.prepAheadNote },
-    brief.travelNote && { icon: Plane, text: brief.travelNote },
-  ].filter((h): h is { icon: typeof AlertTriangle; text: string } => !!h);
+  const highlights = [brief.prepAheadNote && { icon: AlertTriangle, text: brief.prepAheadNote }].filter(
+    (h): h is { icon: typeof AlertTriangle; text: string } => !!h,
+  );
+  const openTaskCount = brief.openTasks.length;
+  const allClear = highlights.length === 0 && !brief.travelNote && openTaskCount === 0;
+  const dinnersPlanned = mealPlan?.days.length ?? null;
 
   return (
     <div className="flex flex-col gap-4">
-      <div className="flex flex-wrap items-center justify-between gap-2 px-1">
-        <div>
-          <h2 className="text-xl font-semibold text-gray-900">Today&apos;s Brief</h2>
-          <p className="text-sm text-gray-500">{formatDate(brief.date)}</p>
-        </div>
-        {brief.weatherNote && (
-          <span className="flex items-center gap-1.5 rounded-full bg-sky-50 px-3 py-1.5 text-xs font-medium text-sky-700">
-            <CloudSun size={14} />
-            {brief.weatherNote}
-          </span>
+      {header}
+
+      <div className="flex gap-2 px-1">
+        <StatTile value={brief.scheduleItems.length} label="On the schedule" accent="bg-sky-50 text-sky-700" />
+        <StatTile value={openTaskCount} label="Tasks open" accent="bg-sage-100 text-sage-800" />
+        {dinnersPlanned !== null && (
+          <StatTile
+            value={`${dinnersPlanned}/${MEAL_PLAN_WEEKDAYS.length}`}
+            label="Dinners planned"
+            accent="bg-brand-50 text-brand-700"
+          />
         )}
       </div>
+
+      {allClear && (
+        <div className="flex items-center gap-2 rounded-2xl bg-sage-100 p-3 text-sm text-sage-800">
+          <CheckCircle2 size={18} className="shrink-0" />
+          <span>All clear — nothing needs your attention today.</span>
+        </div>
+      )}
 
       {highlights.length > 0 && (
         <div className="flex flex-col gap-2">
@@ -86,6 +146,18 @@ export function TodayBriefCard({ brief, loading, error }: TodayBriefCardProps) {
               <span>{h.text}</span>
             </div>
           ))}
+        </div>
+      )}
+
+      {brief.travelNote && (
+        <div className="flex items-start gap-3 rounded-2xl border border-violet-100 bg-violet-50 p-4">
+          <span className="flex h-8 w-8 shrink-0 items-center justify-center rounded-full bg-violet-100 text-violet-600">
+            <Plane size={16} strokeWidth={2.25} />
+          </span>
+          <div>
+            <h3 className="text-sm font-semibold text-violet-900">Upcoming trip</h3>
+            <p className="text-sm text-violet-800">{brief.travelNote}</p>
+          </div>
         </div>
       )}
 
@@ -118,7 +190,7 @@ export function TodayBriefCard({ brief, loading, error }: TodayBriefCardProps) {
                               </span>
                             )}
                             {a.rule.dinnerFlag && (
-                              <span className="flex items-center gap-1 rounded-full bg-orange-50 px-2 py-0.5 text-xs text-orange-700">
+                              <span className="flex items-center gap-1 rounded-full bg-brand-50 px-2 py-0.5 text-xs text-brand-700">
                                 <UtensilsCrossed size={11} /> {a.rule.dinnerFlag}
                               </span>
                             )}
@@ -133,11 +205,11 @@ export function TodayBriefCard({ brief, loading, error }: TodayBriefCardProps) {
           )}
         </Widget>
 
-        <Widget icon={ChefHat} title="Dinner Tonight" accent="orange">
+        <Widget icon={ChefHat} title="Dinner Tonight" accent="brand">
           {brief.dinnerTonight ? (
             <div className="flex flex-col gap-1.5 text-sm">
               <p className="flex items-center gap-1.5 font-medium text-gray-900">
-                <Soup size={14} className="shrink-0 text-orange-500" />
+                <Soup size={14} className="shrink-0 text-brand-500" />
                 {brief.dinnerTonight.meal}
               </p>
               {(brief.dinnerTonight.time_minutes > 0 || brief.dinnerTonight.prep_type) && (
@@ -173,7 +245,7 @@ export function TodayBriefCard({ brief, loading, error }: TodayBriefCardProps) {
           )}
         </Widget>
 
-        <Widget icon={ClipboardList} title="Forms & Outstanding" accent="green">
+        <Widget icon={ClipboardList} title="Forms & Outstanding" accent="sage">
           {brief.openTasks.length === 0 ? (
             <p className="text-sm text-gray-500">Nothing outstanding.</p>
           ) : (

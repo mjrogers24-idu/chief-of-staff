@@ -1,24 +1,34 @@
 "use client";
 
-import { signOut } from "firebase/auth";
+import { CalendarDays, ChefHat, ClipboardList, MoreHorizontal, type LucideIcon } from "lucide-react";
 import Link from "next/link";
-import { useRouter } from "next/navigation";
+import { usePathname, useRouter } from "next/navigation";
 import { useEffect, type ReactNode } from "react";
-import { auth } from "@/lib/firebase";
 import { useAuth } from "@/lib/auth-context";
 
-const NAV = [
-  { href: "/admin/today", label: "Today" },
-  { href: "/admin/rules", label: "Rules" },
-  { href: "/admin/schedule", label: "Schedule" },
-  { href: "/admin/calendars", label: "Calendars" },
-  { href: "/admin/meals", label: "Meals" },
-  { href: "/admin/daycare", label: "Daycare" },
-  { href: "/admin/tasks", label: "Tasks" },
+interface Tab {
+  href: string;
+  label: string;
+  icon: LucideIcon;
+  /** Also highlighted as active when the path starts with one of these. */
+  matchPrefixes?: string[];
+}
+
+const TABS: Tab[] = [
+  { href: "/admin/today", label: "Today", icon: CalendarDays },
+  { href: "/admin/meals", label: "Meals", icon: ChefHat },
+  { href: "/admin/tasks", label: "Tasks", icon: ClipboardList },
+  {
+    href: "/admin/more",
+    label: "More",
+    icon: MoreHorizontal,
+    matchPrefixes: ["/admin/rules", "/admin/schedule", "/admin/calendars", "/admin/daycare"],
+  },
 ];
 
 export default function AdminLayout({ children }: { children: ReactNode }) {
   const router = useRouter();
+  const pathname = usePathname();
   const { user, loading } = useAuth();
 
   useEffect(() => {
@@ -34,28 +44,35 @@ export default function AdminLayout({ children }: { children: ReactNode }) {
   }
 
   return (
-    <div className="mx-auto max-w-3xl px-4 py-6 sm:py-10">
-      <div className="mb-4 flex items-center justify-between sm:mb-8">
-        <h1 className="text-lg font-semibold sm:text-xl">Daily Brief admin</h1>
-        <button
-          onClick={() => signOut(auth)}
-          className="text-sm text-gray-500 underline"
-        >
-          Sign out
-        </button>
-      </div>
-      <nav className="mb-6 -mx-4 flex gap-4 overflow-x-auto whitespace-nowrap border-b border-gray-200 px-4 pb-3 text-sm sm:mb-8">
-        {NAV.map((item) => (
-          <Link
-            key={item.href}
-            href={item.href}
-            className="shrink-0 text-gray-700 hover:underline"
-          >
-            {item.label}
-          </Link>
-        ))}
+    <div className="min-h-screen pb-24">
+      <header className="mx-auto flex max-w-3xl items-center gap-2 px-4 py-4 sm:py-6">
+        <span className="flex h-8 w-8 items-center justify-center rounded-xl bg-brand-600 text-sm font-semibold text-white">
+          D
+        </span>
+        <h1 className="text-lg font-semibold text-gray-900">Daily Brief</h1>
+      </header>
+
+      <main className="mx-auto max-w-3xl px-4">{children}</main>
+
+      <nav className="fixed inset-x-0 bottom-0 z-10 border-t border-gray-200 bg-white/95 backdrop-blur">
+        <div className="mx-auto flex max-w-3xl justify-around px-2 pb-[env(safe-area-inset-bottom)] pt-1.5">
+          {TABS.map((tab) => {
+            const active = pathname === tab.href || tab.matchPrefixes?.some((p) => pathname?.startsWith(p));
+            return (
+              <Link
+                key={tab.href}
+                href={tab.href}
+                className={`flex flex-1 flex-col items-center gap-0.5 rounded-lg px-2 py-2 text-xs ${
+                  active ? "text-brand-600" : "text-gray-400"
+                }`}
+              >
+                <tab.icon size={20} strokeWidth={active ? 2.5 : 2} />
+                <span className={active ? "font-medium" : ""}>{tab.label}</span>
+              </Link>
+            );
+          })}
+        </div>
       </nav>
-      {children}
     </div>
   );
 }

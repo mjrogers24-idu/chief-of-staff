@@ -63,7 +63,7 @@ export function TaskForm({ initialValue, onSubmit, onCancel }: TaskFormProps) {
         <button
           type="submit"
           disabled={submitting}
-          className="rounded bg-gray-900 px-3 py-1.5 text-sm font-medium text-white disabled:opacity-50"
+          className="rounded-lg bg-brand-600 px-3 py-1.5 text-sm font-medium text-white hover:bg-brand-700 disabled:opacity-50"
         >
           {submitting ? "Saving…" : "Save"}
         </button>

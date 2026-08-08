@@ -68,7 +68,7 @@ export default function RulesPage() {
         {!formMode && (
           <button
             onClick={() => setFormMode({ kind: "add" })}
-            className="rounded bg-gray-900 px-3 py-1.5 text-sm font-medium text-white"
+            className="rounded-lg bg-brand-600 px-3 py-1.5 text-sm font-medium text-white hover:bg-brand-700"
           >
             Add rule
           </button>

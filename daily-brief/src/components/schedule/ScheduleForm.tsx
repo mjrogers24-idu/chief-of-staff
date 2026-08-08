@@ -88,7 +88,7 @@ export function ScheduleForm({ initialValue, onSubmit, onCancel }: ScheduleFormP
               onClick={() => toggleDay(day)}
               className={`rounded border px-2 py-1 text-xs ${
                 values.daysOfWeek.includes(day)
-                  ? "border-gray-900 bg-gray-900 text-white"
+                  ? "border-brand-600 bg-brand-600 text-white"
                   : "border-gray-300 text-gray-600"
               }`}
             >
@@ -113,7 +113,7 @@ export function ScheduleForm({ initialValue, onSubmit, onCancel }: ScheduleFormP
         <button
           type="submit"
           disabled={submitting}
-          className="rounded bg-gray-900 px-3 py-1.5 text-sm font-medium text-white disabled:opacity-50"
+          className="rounded-lg bg-brand-600 px-3 py-1.5 text-sm font-medium text-white hover:bg-brand-700 disabled:opacity-50"
         >
           {submitting ? "Saving…" : "Save"}
         </button>

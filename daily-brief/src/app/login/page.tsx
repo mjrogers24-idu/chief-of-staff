@@ -34,8 +34,14 @@ export default function LoginPage() {
 
   return (
     <main className="mx-auto flex min-h-screen max-w-sm flex-col justify-center gap-6 px-4">
-      <h1 className="text-xl font-semibold">Daily Brief</h1>
-      <form onSubmit={handleSubmit} className="flex flex-col gap-3">
+      <div className="flex flex-col items-center gap-2 text-center">
+        <span className="flex h-12 w-12 items-center justify-center rounded-2xl bg-brand-600 text-xl font-semibold text-white">
+          D
+        </span>
+        <h1 className="text-xl font-semibold text-gray-900">Daily Brief</h1>
+        <p className="text-sm text-gray-500">Sign in to see what today looks like.</p>
+      </div>
+      <form onSubmit={handleSubmit} className="flex flex-col gap-3 rounded-2xl border border-gray-200 bg-white p-5 shadow-sm">
         <label className="flex flex-col gap-1 text-sm">
           Email
           <input
@@ -43,7 +49,7 @@ export default function LoginPage() {
             required
             value={email}
             onChange={(e) => setEmail(e.target.value)}
-            className="rounded border border-gray-300 px-3 py-2"
+            className="rounded-lg border border-gray-300 px-3 py-2 focus:border-brand-500 focus:outline-none focus:ring-1 focus:ring-brand-500"
             autoComplete="email"
           />
         </label>
@@ -54,7 +60,7 @@ export default function LoginPage() {
             required
             value={password}
             onChange={(e) => setPassword(e.target.value)}
-            className="rounded border border-gray-300 px-3 py-2"
+            className="rounded-lg border border-gray-300 px-3 py-2 focus:border-brand-500 focus:outline-none focus:ring-1 focus:ring-brand-500"
             autoComplete="current-password"
           />
         </label>
@@ -62,7 +68,7 @@ export default function LoginPage() {
         <button
           type="submit"
           disabled={submitting}
-          className="rounded bg-gray-900 px-3 py-2 text-sm font-medium text-white disabled:opacity-50"
+          className="rounded-lg bg-brand-600 px-3 py-2 text-sm font-medium text-white hover:bg-brand-700 disabled:opacity-50"
         >
           {submitting ? "Signing in…" : "Sign in"}
         </button>

@@ -1,12 +1,14 @@
 "use client";
 
 import { useEffect, useState } from "react";
+import { useAuth } from "@/lib/auth-context";
 import { subscribeDailyBrief, todayDateKey, type DailyBriefDoc } from "@/lib/firestore/dailyBriefs";
 import { currentWeekStart, mealForDate, subscribeMealPlan, type MealDay, type MealPlanDoc } from "@/lib/firestore/mealPlans";
 import { subscribeOpenTasks, type OpenTask } from "@/lib/firestore/openTasks";
 import { TodayBriefCard } from "@/components/brief/TodayBriefCard";
 
 export default function TodayPage() {
+  const { user } = useAuth();
   const [brief, setBrief] = useState<DailyBriefDoc | null>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
@@ -66,5 +68,13 @@ export default function TodayPage() {
     ...(liveOpenTasks ? { openTasks: liveOpenTasks } : {}),
   };
 
-  return <TodayBriefCard brief={displayBrief} loading={loading} error={error} />;
+  return (
+    <TodayBriefCard
+      brief={displayBrief}
+      mealPlan={mealPlan}
+      displayName={user?.displayName}
+      loading={loading}
+      error={error}
+    />
+  );
 }
