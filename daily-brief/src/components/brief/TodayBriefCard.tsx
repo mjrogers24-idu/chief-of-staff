@@ -6,11 +6,13 @@ import {
   ClipboardList,
   Circle,
   CloudSun,
+  Mail,
   Plane,
   Shirt,
   Soup,
   UtensilsCrossed,
 } from "lucide-react";
+import Link from "next/link";
 import { Fragment } from "react";
 import type { DailyBriefDoc, MatchedActionDoc } from "@/lib/firestore/dailyBriefs";
 import { MEAL_PLAN_WEEKDAYS, type MealPlanDoc } from "@/lib/firestore/mealPlans";
@@ -20,6 +22,7 @@ interface TodayBriefCardProps {
   brief: DailyBriefDoc | null;
   mealPlan?: MealPlanDoc | null;
   displayName?: string | null;
+  followUpCount?: number;
   loading?: boolean;
   error?: string | null;
 }
@@ -58,7 +61,14 @@ function StatTile({ value, label, accent }: { value: string | number; label: str
   );
 }
 
-export function TodayBriefCard({ brief, mealPlan, displayName, loading, error }: TodayBriefCardProps) {
+export function TodayBriefCard({
+  brief,
+  mealPlan,
+  displayName,
+  followUpCount = 0,
+  loading,
+  error,
+}: TodayBriefCardProps) {
   const header = (
     <div className="flex flex-wrap items-center justify-between gap-2 px-1">
       <div>
@@ -109,7 +119,8 @@ export function TodayBriefCard({ brief, mealPlan, displayName, loading, error }:
     (h): h is { icon: typeof AlertTriangle; text: string } => !!h,
   );
   const openTaskCount = brief.openTasks.length;
-  const allClear = highlights.length === 0 && !brief.travelNote && openTaskCount === 0;
+  const allClear =
+    highlights.length === 0 && !brief.travelNote && openTaskCount === 0 && followUpCount === 0;
   const dinnersPlanned = mealPlan?.days.length ?? null;
 
   return (
@@ -155,6 +166,18 @@ export function TodayBriefCard({ brief, mealPlan, displayName, loading, error }:
             </div>
           ))}
         </div>
+      )}
+
+      {followUpCount > 0 && (
+        <Link
+          href="/admin/tasks"
+          className="flex items-center gap-2 rounded-2xl bg-violet-50 p-3 text-sm text-violet-900 hover:bg-violet-100 dark:bg-violet-900/30 dark:text-violet-300 dark:hover:bg-violet-900/40"
+        >
+          <Mail size={16} className="shrink-0" />
+          <span>
+            {followUpCount} email{followUpCount === 1 ? "" : "s"} may need a reply — review on Tasks
+          </span>
+        </Link>
       )}
 
       {brief.travelNote && (

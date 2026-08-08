@@ -8,16 +8,18 @@ export type { Parent } from "@/lib/parents";
 
 export const CALENDAR_READONLY_SCOPE = "https://www.googleapis.com/auth/calendar.readonly";
 export const GMAIL_SEND_SCOPE = "https://www.googleapis.com/auth/gmail.send";
+export const GMAIL_READONLY_SCOPE = "https://www.googleapis.com/auth/gmail.readonly";
 
 /**
  * Both parents' calendars feed the brief, but only Michelle's account is
- * used to send it (spec 3.5) — so only her connection needs the extra
- * send scope. Reconnecting (the UI always forces prompt=consent) picks up
- * a scope change for an already-connected account.
+ * used to send the brief and scan the inbox for follow-up suggestions
+ * (spec 3.5) — so only her connection needs the extra scopes. Reconnecting
+ * (the UI always forces prompt=consent) picks up a scope change for an
+ * already-connected account.
  */
 export function scopesFor(parent: Parent): string[] {
   return parent === "michelle"
-    ? [CALENDAR_READONLY_SCOPE, GMAIL_SEND_SCOPE]
+    ? [CALENDAR_READONLY_SCOPE, GMAIL_SEND_SCOPE, GMAIL_READONLY_SCOPE]
     : [CALENDAR_READONLY_SCOPE];
 }
 

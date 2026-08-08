@@ -3,6 +3,7 @@
 import { useEffect, useState } from "react";
 import { useAuth } from "@/lib/auth-context";
 import { subscribeDailyBrief, todayDateKey, type DailyBriefDoc } from "@/lib/firestore/dailyBriefs";
+import { subscribeEmailFollowUps } from "@/lib/firestore/emailFollowUps";
 import { currentWeekStart, mealForDate, subscribeMealPlan, type MealDay, type MealPlanDoc } from "@/lib/firestore/mealPlans";
 import { subscribeOpenTasks, type OpenTask } from "@/lib/firestore/openTasks";
 import { TodayBriefCard } from "@/components/brief/TodayBriefCard";
@@ -12,6 +13,7 @@ export default function TodayPage() {
   const [brief, setBrief] = useState<DailyBriefDoc | null>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
+  const [followUpCount, setFollowUpCount] = useState(0);
 
   // dailyIngestion only bakes dailyBriefs once a day, so a same-day edit to
   // the meal plan or task list wouldn't otherwise show up here until the
@@ -55,6 +57,13 @@ export default function TodayPage() {
     );
   }, []);
 
+  useEffect(() => {
+    return subscribeEmailFollowUps(
+      (suggestions) => setFollowUpCount(suggestions.length),
+      () => setFollowUpCount(0),
+    );
+  }, []);
+
   const liveDinner: MealDay | null | undefined = mealPlanLoaded
     ? mealForDate(mealPlan, new Date())
     : undefined;
@@ -73,6 +82,7 @@ export default function TodayPage() {
       brief={displayBrief}
       mealPlan={mealPlan}
       displayName={user?.displayName}
+      followUpCount={followUpCount}
       loading={loading}
       error={error}
     />

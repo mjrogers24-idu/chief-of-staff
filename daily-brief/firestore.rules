@@ -38,5 +38,14 @@ service cloud.firestore {
     match /openTasks/{taskId} {
       allow read, write: if request.auth != null;
     }
+    // Gemini-suggested "this email might need a follow-up" from the daily
+    // gmail.readonly inbox scan (scanInboxFollowUps, Admin SDK — bypasses
+    // these rules for the create). Never auto-becomes a real task; a
+    // suggestion is deleted once Michelle reviews it from /admin/tasks
+    // (confirmed → a new openTasks doc, or dismissed).
+    match /emailFollowUps/{suggestionId} {
+      allow read, delete: if request.auth != null;
+      allow create, update: if false;
+    }
   }
 }

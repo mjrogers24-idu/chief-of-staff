@@ -1,6 +1,7 @@
 "use client";
 
 import { useEffect, useState } from "react";
+import { subscribeEmailFollowUps, type EmailFollowUpSuggestion } from "@/lib/firestore/emailFollowUps";
 import {
   addOpenTask,
   subscribeOpenTasks,
@@ -8,6 +9,7 @@ import {
   type OpenTask,
   type OpenTaskInput,
 } from "@/lib/firestore/openTasks";
+import { SuggestedFollowUps } from "@/components/tasks/SuggestedFollowUps";
 import { TaskForm } from "@/components/tasks/TaskForm";
 import { TasksTable } from "@/components/tasks/TasksTable";
 
@@ -18,6 +20,7 @@ export default function TasksPage() {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [formMode, setFormMode] = useState<FormMode>(null);
+  const [followUps, setFollowUps] = useState<EmailFollowUpSuggestion[]>([]);
 
   useEffect(() => {
     return subscribeOpenTasks(
@@ -29,6 +32,13 @@ export default function TasksPage() {
         setError("Couldn't load tasks.");
         setLoading(false);
       },
+    );
+  }, []);
+
+  useEffect(() => {
+    return subscribeEmailFollowUps(
+      (data) => setFollowUps(data),
+      () => setFollowUps([]),
     );
   }, []);
 
@@ -66,6 +76,8 @@ export default function TasksPage() {
           onCancel={() => setFormMode(null)}
         />
       )}
+
+      {!formMode && <SuggestedFollowUps suggestions={followUps} />}
 
       {loading && <p className="text-sm text-gray-500 dark:text-gray-400">Loading…</p>}
       {error && <p className="text-sm text-red-600 dark:text-red-400">{error}</p>}

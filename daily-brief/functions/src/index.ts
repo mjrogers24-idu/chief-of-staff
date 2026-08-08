@@ -27,6 +27,7 @@ import { fetchForecast, type DayForecast } from "./weather";
 export { generateMealPlan } from "./generateMealPlan";
 export { parseCalendarUpload } from "./parseCalendarUpload";
 export { parseRecipeUpload } from "./parseRecipeUpload";
+export { scanInboxFollowUps } from "./scanInboxFollowUps";
 
 initializeApp();
 
