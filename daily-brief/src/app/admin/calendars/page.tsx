@@ -84,10 +84,13 @@ function CalendarsPageInner() {
   return (
     <div className="flex flex-col gap-6">
       <p className="text-sm text-gray-500 dark:text-gray-400">
-        Read-only access to each parent&apos;s Google Calendar, used to pull one-off events
-        (practices, field trips, appointments) into the brief. Michelle&apos;s connection also
-        grants permission to send the morning brief email — her consent screen will list an
-        extra &quot;send email&quot; permission that Dan&apos;s doesn&apos;t.
+        Access to each parent&apos;s Google Calendar, used to pull one-off events (practices,
+        field trips, appointments) into the brief. Michelle&apos;s connection also grants
+        permission to send the morning brief email, scan the inbox for follow-ups, and add
+        events created from the Brain Dump chat — her consent screen will list extra
+        permissions (&quot;send email&quot;, &quot;edit events&quot;) that Dan&apos;s
+        doesn&apos;t. If Brain Dump events aren&apos;t landing on the calendar, reconnect
+        Michelle&apos;s account here to pick up the newer permission.
       </p>
 
       {notice && <p className="rounded bg-gray-100 dark:bg-gray-700 px-3 py-2 text-sm text-gray-700 dark:text-gray-300">{notice}</p>}

@@ -1,6 +1,6 @@
 "use client";
 
-import { CalendarDays, ChefHat, ClipboardList, MoreHorizontal, type LucideIcon } from "lucide-react";
+import { CalendarDays, ChefHat, ClipboardList, MoreHorizontal, Sparkles, type LucideIcon } from "lucide-react";
 import Link from "next/link";
 import { usePathname, useRouter } from "next/navigation";
 import { useEffect, type ReactNode } from "react";
@@ -16,6 +16,7 @@ interface Tab {
 
 const TABS: Tab[] = [
   { href: "/admin/today", label: "Today", icon: CalendarDays },
+  { href: "/admin/braindump", label: "Chat", icon: Sparkles },
   { href: "/admin/meals", label: "Meals", icon: ChefHat },
   { href: "/admin/tasks", label: "Tasks", icon: ClipboardList },
   {

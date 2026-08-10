@@ -24,7 +24,9 @@ import { fetchMergedCalendarEvents, type CalendarEvent } from "./googleCalendar"
 import { mealForDate, mondayOf, type MealDay } from "./mealPlan";
 import { fetchForecast, type DayForecast } from "./weather";
 
+export { createCalendarEvent } from "./createCalendarEvent";
 export { generateMealPlan } from "./generateMealPlan";
+export { parseBrainDump } from "./parseBrainDump";
 export { parseCalendarUpload } from "./parseCalendarUpload";
 export { parseRecipeUpload } from "./parseRecipeUpload";
 export { scanInboxFollowUps } from "./scanInboxFollowUps";
