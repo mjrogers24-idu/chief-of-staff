@@ -1,4 +1,4 @@
-import type { Metadata } from "next";
+import type { Metadata, Viewport } from "next";
 import localFont from "next/font/local";
 import "./globals.css";
 import { AuthProvider } from "@/lib/auth-context";
@@ -32,6 +32,23 @@ const geistMono = localFont({
 export const metadata: Metadata = {
   title: "Daily Brief",
   description: "Morning family brief admin",
+  manifest: "/manifest.json",
+  appleWebApp: {
+    capable: true,
+    title: "Daily Brief",
+    statusBarStyle: "default",
+  },
+  icons: {
+    icon: [
+      { url: "/icon-192.png", sizes: "192x192", type: "image/png" },
+      { url: "/icon-512.png", sizes: "512x512", type: "image/png" },
+    ],
+    apple: "/apple-touch-icon.png",
+  },
+};
+
+export const viewport: Viewport = {
+  themeColor: "#BC4C2C",
 };
 
 // The whole app is behind client-side Firebase Auth, so there's nothing

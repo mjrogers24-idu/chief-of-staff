@@ -15,6 +15,9 @@ const firebaseConfig: FirebaseOptions = {
 
 const app = getApps().length ? getApps()[0]! : initializeApp(firebaseConfig);
 
+// Exported for src/lib/push.ts, which needs the app instance itself to call
+// getMessaging(app) rather than one of the pre-built services below.
+export { app };
 export const auth = getAuth(app);
 export const db = getFirestore(app);
 export const functions = getFunctions(app);

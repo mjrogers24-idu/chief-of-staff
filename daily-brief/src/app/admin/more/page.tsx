@@ -5,6 +5,7 @@ import { CalendarClock, CalendarRange, ChevronRight, ImageUp, LogOut, Monitor, M
 import Link from "next/link";
 import { auth } from "@/lib/firebase";
 import { useTheme, type Theme } from "@/lib/theme-context";
+import { NotificationsToggle } from "@/components/notifications/NotificationsToggle";
 
 interface MoreLink {
   href: string;
@@ -81,6 +82,8 @@ export default function MorePage() {
       <p className="text-sm text-gray-500 dark:text-gray-400">Setup & less-frequent settings.</p>
 
       <ThemeToggle />
+
+      <NotificationsToggle />
 
       <div className="flex flex-col overflow-hidden rounded-2xl border border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-800 shadow-sm">
         {LINKS.map((link, i) => (

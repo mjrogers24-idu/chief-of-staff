@@ -33,6 +33,8 @@ export { parseCalendarUpload } from "./parseCalendarUpload";
 export { parseRecipeUpload } from "./parseRecipeUpload";
 export { prioritizeTasks } from "./prioritizeTasks";
 export { scanInboxFollowUps } from "./scanInboxFollowUps";
+export { sendTaskReminders } from "./sendTaskReminders";
+export { sendTestNotification } from "./sendTestNotification";
 
 initializeApp();
 

@@ -30,6 +30,14 @@ env:
   - variable: NEXT_PUBLIC_FIREBASE_APP_ID
     value: "1:1052531140945:web:30bb8471780c57d1cf0b70"
     availability: [BUILD, RUNTIME]
+  # "Web push certificate" key pair for browser push notifications —
+  # Firebase console > Project settings > Cloud Messaging > Web Push
+  # certificates > Generate key pair. Needed at BUILD time (Next.js inlines
+  # NEXT_PUBLIC_ vars into the client bundle), so notifications stay
+  # disabled ("misconfigured") until this is filled in and redeployed.
+  - variable: NEXT_PUBLIC_FIREBASE_VAPID_KEY
+    value: ""
+    availability: [BUILD, RUNTIME]
 
   # Backend "chief-of-staff", assigned once the App Hosting backend was
   # created. "<this>/api/google/callback" also needs to be added to the
