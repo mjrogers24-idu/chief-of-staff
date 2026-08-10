@@ -1,8 +1,12 @@
 import { GoogleGenAI } from "@google/genai";
 
-// Confirm this is still current when deploying — Gemini model names roll
-// over periodically.
-const MODEL = "gemini-2.5-flash";
+// A rolling alias (always the current recommended Flash model) rather
+// than a pinned version like "gemini-2.5-flash" — that pinned name was
+// retired for new API keys well before its official shutdown date and
+// broke every Gemini call in this app with a 404. Using -latest trades a
+// small amount of behavior stability for not having to notice and update
+// this string every time Google rolls the lineup.
+const MODEL = "gemini-flash-latest";
 
 function client(): GoogleGenAI {
   const apiKey = process.env.GEMINI_API_KEY;
