@@ -1,6 +1,6 @@
 "use client";
 
-import { CalendarDays, ChefHat, ClipboardList, type LucideIcon } from "lucide-react";
+import { CalendarDays, CheckCircle2, ChefHat, ClipboardList, type LucideIcon } from "lucide-react";
 import { type ReactNode, useState } from "react";
 import type { CalendarListEntry } from "@/lib/calendars";
 import {
@@ -26,38 +26,58 @@ interface SectionProps<T> {
   items: T[];
   renderFields: (item: T, update: (patch: Partial<T>) => void) => ReactNode;
   confirm: (item: T) => Promise<unknown>;
+  /** Short label for the "✓ Added" confirmation row, e.g. the item's title. */
+  summaryLabel: (item: T) => string;
   disabledReason?: (item: T) => string | null;
 }
 
-/** One category's list of editable proposal cards — confirming or discarding just removes it from this local list. */
-function ProposalSection<T>({ icon: Icon, title, items: initialItems, renderFields, confirm, disabledReason }: SectionProps<T>) {
-  const [items, setItems] = useState(initialItems.map((item, i) => ({ id: i, item, error: null as string | null })));
-  const [busyId, setBusyId] = useState<number | null>(null);
+type RowStatus = "pending" | "saving" | "done";
+
+/**
+ * One category's list of editable proposal cards. Confirming an item no
+ * longer removes it — it flips to a "✓ Added" row so there's visible
+ * feedback that it actually saved, instead of the card just vanishing.
+ * Discarding still removes it outright, since nothing was ever saved.
+ */
+function ProposalSection<T>({
+  icon: Icon,
+  title,
+  items: initialItems,
+  renderFields,
+  confirm,
+  summaryLabel,
+  disabledReason,
+}: SectionProps<T>) {
+  const [items, setItems] = useState(
+    initialItems.map((item, i) => ({ id: i, item, error: null as string | null, status: "pending" as RowStatus })),
+  );
   const [addingAll, setAddingAll] = useState(false);
 
   if (items.length === 0) return null;
 
-  const addableCount = items.filter((row) => !disabledReason?.(row.item)).length;
+  const pending = items.filter((row) => row.status === "pending");
+  const addableCount = pending.filter((row) => !disabledReason?.(row.item)).length;
+  const anySaving = items.some((row) => row.status === "saving");
 
   function update(id: number, patch: Partial<T>) {
     setItems((prev) => prev.map((row) => (row.id === id ? { ...row, item: { ...row.item, ...patch } } : row)));
   }
 
   async function handleConfirm(id: number, item: T) {
-    setBusyId(id);
+    setItems((prev) => prev.map((row) => (row.id === id ? { ...row, status: "saving", error: null } : row)));
     try {
       await confirm(item);
-      setItems((prev) => prev.filter((row) => row.id !== id));
+      setItems((prev) => prev.map((row) => (row.id === id ? { ...row, status: "done" } : row)));
     } catch {
-      setItems((prev) => prev.map((row) => (row.id === id ? { ...row, error: "Couldn't save — try again." } : row)));
-    } finally {
-      setBusyId(null);
+      setItems((prev) =>
+        prev.map((row) => (row.id === id ? { ...row, status: "pending", error: "Couldn't save — try again." } : row)),
+      );
     }
   }
 
   async function handleAddAll() {
     setAddingAll(true);
-    for (const row of items) {
+    for (const row of pending) {
       if (disabledReason?.(row.item)) continue;
       await handleConfirm(row.id, row.item);
     }
@@ -72,13 +92,13 @@ function ProposalSection<T>({ icon: Icon, title, items: initialItems, renderFiel
             <Icon size={16} strokeWidth={2.25} />
           </span>
           <h3 className="text-sm font-semibold text-brand-900 dark:text-brand-200">
-            {title} ({items.length})
+            {title} ({pending.length})
           </h3>
         </div>
         {addableCount > 1 && (
           <button
             onClick={handleAddAll}
-            disabled={addingAll || busyId !== null}
+            disabled={addingAll || anySaving}
             className="text-xs font-medium text-brand-700 underline disabled:opacity-50 dark:text-brand-300"
           >
             {addingAll ? "Adding…" : "Add all"}
@@ -86,8 +106,20 @@ function ProposalSection<T>({ icon: Icon, title, items: initialItems, renderFiel
         )}
       </div>
       <div className="flex flex-col gap-2">
-        {items.map(({ id, item, error }) => {
+        {items.map(({ id, item, error, status }) => {
+          if (status === "done") {
+            return (
+              <div
+                key={id}
+                className="flex items-center gap-2 rounded-xl bg-sage-50 px-3 py-2.5 text-sm text-sage-800 dark:bg-sage-900/20 dark:text-sage-300"
+              >
+                <CheckCircle2 size={16} className="shrink-0" />
+                <span>Added — {summaryLabel(item)}</span>
+              </div>
+            );
+          }
           const blocked = disabledReason?.(item) ?? null;
+          const saving = status === "saving";
           return (
             <div key={id} className="rounded-xl bg-white p-3 dark:bg-gray-800">
               <div className="flex flex-col gap-2">{renderFields(item, (patch) => update(id, patch))}</div>
@@ -96,14 +128,14 @@ function ProposalSection<T>({ icon: Icon, title, items: initialItems, renderFiel
               <div className="mt-2 flex gap-3">
                 <button
                   onClick={() => handleConfirm(id, item)}
-                  disabled={busyId === id || !!blocked || addingAll}
+                  disabled={saving || !!blocked || addingAll}
                   className="text-xs font-medium text-brand-600 underline disabled:opacity-50 dark:text-brand-400"
                 >
-                  {busyId === id ? "Saving…" : "Add"}
+                  {saving ? "Saving…" : "Add"}
                 </button>
                 <button
                   onClick={() => setItems((prev) => prev.filter((row) => row.id !== id))}
-                  disabled={busyId === id || addingAll}
+                  disabled={saving || addingAll}
                   className="text-xs text-gray-500 underline disabled:opacity-50 dark:text-gray-400"
                 >
                   Discard
@@ -138,6 +170,7 @@ export function BrainDumpReview({ tasks, events, meals, calendars }: BrainDumpRe
         title="Tasks"
         items={tasks}
         confirm={confirmTaskProposal}
+        summaryLabel={(item) => item.title}
         renderFields={(item, update) => (
           <>
             <input
@@ -160,6 +193,7 @@ export function BrainDumpReview({ tasks, events, meals, calendars }: BrainDumpRe
         title="Calendar events"
         items={events}
         confirm={confirmEventProposal}
+        summaryLabel={(item) => item.title}
         renderFields={(item, update) => (
           <>
             <input
@@ -212,6 +246,7 @@ export function BrainDumpReview({ tasks, events, meals, calendars }: BrainDumpRe
         title="Dinner plans"
         items={meals}
         confirm={confirmMealProposal}
+        summaryLabel={(item) => item.meal}
         disabledReason={(item) => (weekdayLabelFor(item.date) ? null : "Weekends aren't tracked on the Meals page.")}
         renderFields={(item, update) => (
           <div className="flex gap-2">
