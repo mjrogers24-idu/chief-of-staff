@@ -1,5 +1,6 @@
 import { httpsCallable } from "firebase/functions";
 import { functions } from "@/lib/firebase";
+import { parseDateKey } from "@/lib/dates";
 import { addOpenTask } from "@/lib/firestore/openTasks";
 import { MEAL_PLAN_WEEKDAYS, currentWeekStart, upsertMealDay, type MealPlanWeekday } from "@/lib/firestore/mealPlans";
 
@@ -54,15 +55,13 @@ const JS_DAY_LABELS = ["Sun", "Mon", "Tue", "Wed", "Thu", "Fri", "Sat"] as const
 
 /** Mon-Fri weekday label for a YYYY-MM-DD date, or null for a Sat/Sun date (meal plans don't track weekends). */
 export function weekdayLabelFor(dateKey: string): MealPlanWeekday | null {
-  const [y, m, d] = dateKey.split("-").map(Number);
-  const label = JS_DAY_LABELS[new Date(y, m - 1, d).getDay()];
+  const label = JS_DAY_LABELS[parseDateKey(dateKey).getDay()];
   return (MEAL_PLAN_WEEKDAYS as readonly string[]).includes(label) ? (label as MealPlanWeekday) : null;
 }
 
 /** Throws if the proposal's date is a weekend — check weekdayLabelFor first to show a friendlier error. */
 export function confirmMealProposal(proposal: MealProposal): Promise<void> {
-  const [y, m, d] = proposal.date.split("-").map(Number);
-  const date = new Date(y, m - 1, d);
+  const date = parseDateKey(proposal.date);
   const day = weekdayLabelFor(proposal.date);
   if (!day) throw new Error("Meal plans only cover weeknights (Mon-Fri).");
 

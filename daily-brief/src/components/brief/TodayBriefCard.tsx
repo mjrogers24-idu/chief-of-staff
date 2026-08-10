@@ -8,14 +8,12 @@ import {
   CloudSun,
   Mail,
   Plane,
-  Shirt,
   Soup,
-  UtensilsCrossed,
 } from "lucide-react";
 import Link from "next/link";
-import { Fragment } from "react";
-import type { DailyBriefDoc, MatchedActionDoc } from "@/lib/firestore/dailyBriefs";
+import type { DailyBriefDoc } from "@/lib/firestore/dailyBriefs";
 import { MEAL_PLAN_WEEKDAYS, type MealPlanDoc } from "@/lib/firestore/mealPlans";
+import { ScheduleItemsList } from "@/components/schedule/ScheduleItemsList";
 import { Widget } from "./Widget";
 
 interface TodayBriefCardProps {
@@ -26,12 +24,6 @@ interface TodayBriefCardProps {
   loading?: boolean;
   error?: string | null;
 }
-
-const SOURCE_LABEL: Record<string, string> = {
-  recurring: "Recurring",
-  calendar: "Calendar",
-  "uploaded-calendar": "Daycare",
-};
 
 function greeting(): string {
   const hour = new Date().getHours();
@@ -48,16 +40,25 @@ function formatToday(): string {
   });
 }
 
-function actionsForItem(itemId: string, actions: MatchedActionDoc[]) {
-  return actions.filter((a) => a.item.id === itemId);
-}
-
-function StatTile({ value, label, accent }: { value: string | number; label: string; accent: string }) {
+function StatTile({
+  value,
+  label,
+  accent,
+  href,
+}: {
+  value: string | number;
+  label: string;
+  accent: string;
+  href: string;
+}) {
   return (
-    <div className={`flex flex-1 flex-col items-center gap-0.5 rounded-2xl px-2 py-3 ${accent}`}>
+    <Link
+      href={href}
+      className={`flex flex-1 flex-col items-center gap-0.5 rounded-2xl px-2 py-3 transition hover:brightness-95 dark:hover:brightness-110 ${accent}`}
+    >
       <span className="text-xl font-semibold">{value}</span>
       <span className="text-center text-[11px] leading-tight opacity-80">{label}</span>
-    </div>
+    </Link>
   );
 }
 
@@ -132,17 +133,20 @@ export function TodayBriefCard({
           value={brief.scheduleItems.length}
           label="On the schedule"
           accent="bg-sky-50 text-sky-700 dark:bg-sky-900/30 dark:text-sky-300"
+          href="/admin/schedule-view"
         />
         <StatTile
           value={openTaskCount}
           label="Tasks open"
           accent="bg-sage-100 text-sage-800 dark:bg-sage-900/30 dark:text-sage-300"
+          href="/admin/tasks"
         />
         {dinnersPlanned !== null && (
           <StatTile
             value={`${dinnersPlanned}/${MEAL_PLAN_WEEKDAYS.length}`}
             label="Dinners planned"
             accent="bg-brand-50 text-brand-700 dark:bg-brand-900/30 dark:text-brand-300"
+            href="/admin/meals"
           />
         )}
       </div>
@@ -194,46 +198,11 @@ export function TodayBriefCard({
 
       <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
         <Widget icon={CalendarDays} title="Today's Schedule" accent="blue">
-          {brief.scheduleItems.length === 0 ? (
-            <p className="text-sm text-gray-500 dark:text-gray-400">Nothing on the schedule today.</p>
-          ) : (
-            <ul className="flex flex-col gap-2.5">
-              {brief.scheduleItems.map((item) => {
-                const itemActions = actionsForItem(item.id, brief.actions);
-                return (
-                  <li key={item.id} className="text-sm">
-                    <div className="flex items-baseline justify-between gap-2">
-                      <span>
-                        {item.kid && <span className="font-medium">{item.kid} — </span>}
-                        {item.title}
-                      </span>
-                      <span className="shrink-0 text-xs text-gray-400 dark:text-gray-500">
-                        {SOURCE_LABEL[item.source] ?? item.source}
-                      </span>
-                    </div>
-                    {itemActions.length > 0 && (
-                      <div className="mt-1 flex flex-wrap gap-1.5">
-                        {itemActions.map((a, i) => (
-                          <Fragment key={i}>
-                            {a.rule.wearNote && (
-                              <span className="flex items-center gap-1 rounded-full bg-gray-100 dark:bg-gray-700 px-2 py-0.5 text-xs text-gray-600 dark:text-gray-400">
-                                <Shirt size={11} /> {a.rule.wearNote}
-                              </span>
-                            )}
-                            {a.rule.dinnerFlag && (
-                              <span className="flex items-center gap-1 rounded-full bg-brand-50 px-2 py-0.5 text-xs text-brand-700 dark:bg-brand-900/30 dark:text-brand-300">
-                                <UtensilsCrossed size={11} /> {a.rule.dinnerFlag}
-                              </span>
-                            )}
-                          </Fragment>
-                        ))}
-                      </div>
-                    )}
-                  </li>
-                );
-              })}
-            </ul>
-          )}
+          <ScheduleItemsList
+            items={brief.scheduleItems}
+            actions={brief.actions}
+            emptyLabel="Nothing on the schedule today."
+          />
         </Widget>
 
         <Widget icon={ChefHat} title="Dinner Tonight" accent="brand">
