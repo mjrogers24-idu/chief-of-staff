@@ -3,7 +3,8 @@
 import { Send, X } from "lucide-react";
 import { useEffect, useRef, useState } from "react";
 import { useAuth } from "@/lib/auth-context";
-import { parseBrainDump, type BrainDumpProposals } from "@/lib/brainDump";
+import { parseBrainDump, type MealProposal, type ReviewEventProposal, type TaskProposal } from "@/lib/brainDump";
+import { defaultCalendarIdFor, listCalendars, type CalendarListEntry } from "@/lib/calendars";
 import { BrainDumpReview } from "./BrainDumpReview";
 
 const PLACEHOLDER = "Type a message…";
@@ -12,7 +13,9 @@ const MAX_TEXTAREA_HEIGHT = 128;
 interface Turn {
   id: number;
   text: string;
-  proposals: BrainDumpProposals;
+  tasks: TaskProposal[];
+  events: ReviewEventProposal[];
+  meals: MealProposal[];
 }
 
 function firstName(displayName?: string | null): string | null {
@@ -29,10 +32,19 @@ export function BrainDumpChat() {
   // composer, same as any texting app.
   const [turns, setTurns] = useState<Turn[]>([]);
   const [nextId, setNextId] = useState(1);
+  const [calendars, setCalendars] = useState<CalendarListEntry[]>([]);
   const textareaRef = useRef<HTMLTextAreaElement>(null);
   const bottomRef = useRef<HTMLDivElement>(null);
 
   const name = firstName(user?.displayName);
+
+  useEffect(() => {
+    // Best-effort — if this fails (e.g. Michelle hasn't reconnected calendar write
+    // access yet), event proposals just fall back to "primary" with no dropdown options.
+    listCalendars()
+      .then(setCalendars)
+      .catch(() => setCalendars([]));
+  }, []);
 
   useEffect(() => {
     bottomRef.current?.scrollIntoView({ behavior: "smooth", block: "end" });
@@ -52,7 +64,14 @@ export function BrainDumpChat() {
     setError(null);
     try {
       const proposals = await parseBrainDump(submittedText);
-      setTurns((prev) => [...prev, { id: nextId, text: submittedText, proposals }]);
+      const events: ReviewEventProposal[] = proposals.events.map((event) => ({
+        ...event,
+        calendarId: defaultCalendarIdFor(event.kid, calendars),
+      }));
+      setTurns((prev) => [
+        ...prev,
+        { id: nextId, text: submittedText, tasks: proposals.tasks, events, meals: proposals.meals },
+      ]);
       setNextId((n) => n + 1);
       setText("");
       requestAnimationFrame(resizeTextarea);
@@ -93,7 +112,7 @@ export function BrainDumpChat() {
               <X size={14} />
             </button>
           </div>
-          <BrainDumpReview proposals={turn.proposals} />
+          <BrainDumpReview tasks={turn.tasks} events={turn.events} meals={turn.meals} calendars={calendars} />
         </div>
       ))}
 

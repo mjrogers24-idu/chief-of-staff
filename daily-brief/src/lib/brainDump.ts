@@ -16,6 +16,15 @@ export interface EventProposal {
   date: string;
   /** HH:MM 24-hour, or null for an all-day/no-specific-time event. */
   time: string | null;
+  /** Address or place name, if one was mentioned. */
+  location: string | null;
+  /** Gemini's best guess of which kid this is about — a hint for defaulting the calendar choice, not saved anywhere. */
+  kid: string | null;
+}
+
+/** An EventProposal enriched with which Google Calendar to file it under — set client-side once the calendar list loads. */
+export interface ReviewEventProposal extends EventProposal {
+  calendarId: string;
 }
 
 export interface MealProposal {
@@ -42,13 +51,24 @@ export function confirmTaskProposal(proposal: TaskProposal): Promise<unknown> {
   return addOpenTask({ title: proposal.title, dueDate: proposal.dueDate });
 }
 
+interface CreateCalendarEventRequest {
+  title: string;
+  date: string;
+  time: string | null;
+  location: string | null;
+  calendarId: string;
+}
+
 /** Writes the event onto Michelle's real Google Calendar via the createCalendarEvent Cloud Function. */
-export async function confirmEventProposal(proposal: EventProposal): Promise<void> {
-  const call = httpsCallable<{ title: string; date: string; time: string | null }, { eventId: string }>(
-    functions,
-    "createCalendarEvent",
-  );
-  await call({ title: proposal.title, date: proposal.date, time: proposal.time });
+export async function confirmEventProposal(proposal: ReviewEventProposal): Promise<void> {
+  const call = httpsCallable<CreateCalendarEventRequest, { eventId: string }>(functions, "createCalendarEvent");
+  await call({
+    title: proposal.title,
+    date: proposal.date,
+    time: proposal.time,
+    location: proposal.location,
+    calendarId: proposal.calendarId,
+  });
 }
 
 const JS_DAY_LABELS = ["Sun", "Mon", "Tue", "Wed", "Thu", "Fri", "Sat"] as const;

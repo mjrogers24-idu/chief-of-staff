@@ -13,12 +13,28 @@ describe("parseBrainDumpResponse", () => {
   it("parses a well-formed response with all three categories", () => {
     const raw = JSON.stringify({
       tasks: [{ title: "Call the dentist", dueDate: "2026-08-14" }],
-      events: [{ title: "Jake's checkup", date: "2026-08-12", time: "14:30" }],
+      events: [
+        {
+          title: "Josh's checkup",
+          date: "2026-08-12",
+          time: "14:30",
+          location: "123 Main St",
+          kid: "Josh",
+        },
+      ],
       meals: [{ date: "2026-08-13", meal: "Tacos", notes: "kids' favorite" }],
     });
     expect(parseBrainDumpResponse(raw)).toEqual({
       tasks: [{ title: "Call the dentist", dueDate: "2026-08-14" }],
-      events: [{ title: "Jake's checkup", date: "2026-08-12", time: "14:30" }],
+      events: [
+        {
+          title: "Josh's checkup",
+          date: "2026-08-12",
+          time: "14:30",
+          location: "123 Main St",
+          kid: "Josh",
+        },
+      ],
       meals: [{ date: "2026-08-13", meal: "Tacos", notes: "kids' favorite" }],
     });
   });
@@ -53,7 +69,16 @@ describe("parseBrainDumpResponse", () => {
       events: [{ title: "Practice", date: "2026-08-12", time: "not-a-time" }],
       meals: [],
     });
-    expect(parseBrainDumpResponse(raw).events).toEqual([{ title: "Practice", date: "2026-08-12", time: null }]);
+    expect(parseBrainDumpResponse(raw).events).toEqual([
+      { title: "Practice", date: "2026-08-12", time: null, location: null, kid: null },
+    ]);
+  });
+
+  it("defaults an event's location and kid to null when omitted", () => {
+    const raw = JSON.stringify({ tasks: [], events: [{ title: "Practice", date: "2026-08-12" }], meals: [] });
+    expect(parseBrainDumpResponse(raw).events).toEqual([
+      { title: "Practice", date: "2026-08-12", time: null, location: null, kid: null },
+    ]);
   });
 
   it("drops a meal missing a date", () => {

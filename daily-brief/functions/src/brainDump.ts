@@ -20,6 +20,10 @@ export interface EventProposal {
   date: string;
   /** HH:MM 24-hour, or null for an all-day/no-specific-time event. */
   time: string | null;
+  /** Address or place name, if one was mentioned — kept separate from the title. */
+  location: string | null;
+  /** Best-guess name of the kid this is about, if the note names one — used client-side to default which calendar to file it under. */
+  kid: string | null;
 }
 
 export interface MealProposal {
@@ -45,7 +49,9 @@ export function composeBrainDumpPrompt(text: string, todayDateKey: string): stri
     "  only if one is stated or clearly implied.",
     '- "events": anything that belongs on a calendar — appointments, activities, practices,',
     "  pickups/dropoffs, plans with a specific day. Only include an event if you can determine",
-    "  a specific date for it.",
+    "  a specific date for it. If an address or place name is mentioned, pull it out as a",
+    "  separate location rather than leaving it inside the title. If the note names which kid",
+    "  the event is for (e.g. \"Josh has practice\"), capture that name separately too.",
     '- "meals": dinner plans or ideas mentioned for a specific night. Only include a meal if you',
     "  can determine a specific date for it.",
     "",
@@ -64,7 +70,8 @@ export function composeBrainDumpPrompt(text: string, todayDateKey: string): stri
     "Output valid JSON only, in this shape:",
     "{",
     '  "tasks": [{ "title": "...", "dueDate": "YYYY-MM-DD or omit" }],',
-    '  "events": [{ "title": "...", "date": "YYYY-MM-DD", "time": "HH:MM or omit" }],',
+    '  "events": [{ "title": "...", "date": "YYYY-MM-DD", "time": "HH:MM or omit",',
+    '    "location": "address/place or omit", "kid": "name or omit" }],',
     '  "meals": [{ "date": "YYYY-MM-DD", "meal": "...", "notes": "optional extra detail or omit" }]',
     "}",
     'Use empty arrays for any category with nothing to add — e.g. "tasks": [].',
@@ -96,7 +103,9 @@ function validEventProposal(raw: unknown): EventProposal | null {
   if (!title) return null;
   if (typeof r.date !== "string" || !DATE_PATTERN.test(r.date)) return null;
   const time = typeof r.time === "string" && TIME_PATTERN.test(r.time) ? r.time : null;
-  return { title, date: r.date, time };
+  const location = cleanTitle(r.location);
+  const kid = cleanTitle(r.kid);
+  return { title, date: r.date, time, location, kid };
 }
 
 function validMealProposal(raw: unknown): MealProposal | null {

@@ -57,12 +57,32 @@ export async function fetchEventsForParent(
     .filter((event) => event.date.length === 10);
 }
 
+export interface CalendarListEntry {
+  id: string;
+  summary: string;
+  primary: boolean;
+}
+
+/** The Google Calendars (one per kid, plus the account's own) the parent has access to. */
+export async function listCalendarsForParent(account: GoogleAccount): Promise<CalendarListEntry[]> {
+  const auth = buildClient(account.refreshToken);
+  const calendar = google.calendar({ version: "v3", auth });
+
+  const res = await calendar.calendarList.list();
+  return (res.data.items ?? [])
+    .filter((entry) => !!entry.id && !!entry.summary)
+    .map((entry) => ({ id: entry.id!, summary: entry.summary!, primary: !!entry.primary }));
+}
+
 export interface NewCalendarEvent {
   title: string;
   /** YYYY-MM-DD */
   date: string;
   /** HH:MM 24-hour, or null for an all-day event. */
   time: string | null;
+  location: string | null;
+  /** A specific calendar's id, or "primary" for the account's own default calendar. */
+  calendarId: string;
 }
 
 // Same anchor as dailyIngestion.ts's TIMEZONE — events created here should
@@ -84,7 +104,7 @@ function plusOneHour(date: string, time: string): { date: string; time: string }
 }
 
 /**
- * Creates a new event on the parent's primary Google Calendar — the write
+ * Creates a new event on one of the parent's Google Calendars — the write
  * side of the brain-dump chat feature. Timed events default to a 1-hour
  * duration (Google Calendar's own UI does the same when you don't set an
  * end time); all-day events use the exclusive-end-date convention the
@@ -94,22 +114,26 @@ export async function createEventForParent(account: GoogleAccount, event: NewCal
   const auth = buildClient(account.refreshToken);
   const calendar = google.calendar({ version: "v3", auth });
 
-  const requestBody = event.time
+  const timeFields = event.time
     ? (() => {
         const end = plusOneHour(event.date, event.time!);
         return {
-          summary: event.title,
           start: { dateTime: `${event.date}T${event.time}:00`, timeZone: EVENT_TIMEZONE },
           end: { dateTime: `${end.date}T${end.time}:00`, timeZone: EVENT_TIMEZONE },
         };
       })()
     : {
-        summary: event.title,
         start: { date: event.date },
         end: { date: addOneDay(event.date) },
       };
 
-  const res = await calendar.events.insert({ calendarId: "primary", requestBody });
+  const requestBody = {
+    summary: event.title,
+    location: event.location ?? undefined,
+    ...timeFields,
+  };
+
+  const res = await calendar.events.insert({ calendarId: event.calendarId, requestBody });
   if (!res.data.id) throw new Error("Calendar insert returned no event id");
   return res.data.id;
 }

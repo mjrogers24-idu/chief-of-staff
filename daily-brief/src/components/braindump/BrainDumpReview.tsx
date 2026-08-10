@@ -2,19 +2,22 @@
 
 import { CalendarDays, ChefHat, ClipboardList, type LucideIcon } from "lucide-react";
 import { type ReactNode, useState } from "react";
+import type { CalendarListEntry } from "@/lib/calendars";
 import {
   confirmEventProposal,
   confirmMealProposal,
   confirmTaskProposal,
   weekdayLabelFor,
-  type BrainDumpProposals,
-  type EventProposal,
   type MealProposal,
+  type ReviewEventProposal,
   type TaskProposal,
 } from "@/lib/brainDump";
 
 interface BrainDumpReviewProps {
-  proposals: BrainDumpProposals;
+  tasks: TaskProposal[];
+  events: ReviewEventProposal[];
+  meals: MealProposal[];
+  calendars: CalendarListEntry[];
 }
 
 interface SectionProps<T> {
@@ -117,8 +120,8 @@ function ProposalSection<T>({ icon: Icon, title, items: initialItems, renderFiel
 const fieldClass =
   "rounded border border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-900 px-2 py-1 text-sm text-gray-900 dark:text-gray-100";
 
-export function BrainDumpReview({ proposals }: BrainDumpReviewProps) {
-  const foundNothing = proposals.tasks.length === 0 && proposals.events.length === 0 && proposals.meals.length === 0;
+export function BrainDumpReview({ tasks, events, meals, calendars }: BrainDumpReviewProps) {
+  const foundNothing = tasks.length === 0 && events.length === 0 && meals.length === 0;
 
   if (foundNothing) {
     return (
@@ -133,7 +136,7 @@ export function BrainDumpReview({ proposals }: BrainDumpReviewProps) {
       <ProposalSection<TaskProposal>
         icon={ClipboardList}
         title="Tasks"
-        items={proposals.tasks}
+        items={tasks}
         confirm={confirmTaskProposal}
         renderFields={(item, update) => (
           <>
@@ -152,10 +155,10 @@ export function BrainDumpReview({ proposals }: BrainDumpReviewProps) {
           </>
         )}
       />
-      <ProposalSection<EventProposal>
+      <ProposalSection<ReviewEventProposal>
         icon={CalendarDays}
         title="Calendar events"
-        items={proposals.events}
+        items={events}
         confirm={confirmEventProposal}
         renderFields={(item, update) => (
           <>
@@ -179,13 +182,35 @@ export function BrainDumpReview({ proposals }: BrainDumpReviewProps) {
                 className={fieldClass}
               />
             </div>
+            <input
+              value={item.location ?? ""}
+              onChange={(e) => update({ location: e.target.value || null })}
+              className={fieldClass}
+              placeholder="Location (optional)"
+            />
+            <select
+              value={item.calendarId}
+              onChange={(e) => update({ calendarId: e.target.value })}
+              className={fieldClass}
+            >
+              <option value="primary">
+                {calendars.find((c) => c.primary)?.summary ?? "My calendar"}
+              </option>
+              {calendars
+                .filter((c) => !c.primary)
+                .map((c) => (
+                  <option key={c.id} value={c.id}>
+                    {c.summary}
+                  </option>
+                ))}
+            </select>
           </>
         )}
       />
       <ProposalSection<MealProposal>
         icon={ChefHat}
         title="Dinner plans"
-        items={proposals.meals}
+        items={meals}
         confirm={confirmMealProposal}
         disabledReason={(item) => (weekdayLabelFor(item.date) ? null : "Weekends aren't tracked on the Meals page.")}
         renderFields={(item, update) => (

@@ -18,6 +18,9 @@ interface CreateCalendarEventRequest {
   date: string;
   /** HH:MM 24-hour, optional */
   time?: string | null;
+  location?: string | null;
+  /** A specific calendar's id, or "primary" (the default) for Michelle's own calendar. */
+  calendarId?: string;
 }
 
 /**
@@ -32,7 +35,7 @@ export const createCalendarEvent = onCall(async (request) => {
     throw new HttpsError("unauthenticated", "Sign in required.");
   }
 
-  const { title, date, time } = (request.data ?? {}) as Partial<CreateCalendarEventRequest>;
+  const { title, date, time, location, calendarId } = (request.data ?? {}) as Partial<CreateCalendarEventRequest>;
   if (!title || !title.trim() || !date) {
     throw new HttpsError("invalid-argument", "title and date are required.");
   }
@@ -56,7 +59,13 @@ export const createCalendarEvent = onCall(async (request) => {
   }
 
   try {
-    const eventId = await createEventForParent(michelle, { title: title.trim(), date, time: time ?? null });
+    const eventId = await createEventForParent(michelle, {
+      title: title.trim(),
+      date,
+      time: time ?? null,
+      location: location?.trim() || null,
+      calendarId: calendarId?.trim() || "primary",
+    });
     return { eventId };
   } catch (error) {
     logger.error("createCalendarEvent: Calendar insert failed", error);

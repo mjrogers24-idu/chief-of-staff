@@ -27,6 +27,7 @@ import { fetchForecast, type DayForecast } from "./weather";
 export { createCalendarEvent } from "./createCalendarEvent";
 export { generateMealPlan } from "./generateMealPlan";
 export { getScheduleForDate } from "./getScheduleForDate";
+export { listCalendars } from "./listCalendars";
 export { parseBrainDump } from "./parseBrainDump";
 export { parseCalendarUpload } from "./parseCalendarUpload";
 export { parseRecipeUpload } from "./parseRecipeUpload";
