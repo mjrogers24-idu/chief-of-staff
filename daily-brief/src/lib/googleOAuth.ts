@@ -26,10 +26,22 @@ export function scopesFor(parent: Parent): string[] {
     : [CALENDAR_READONLY_SCOPE];
 }
 
-function redirectUri() {
+/**
+ * The configured base URL of this app — deliberately not derived from an
+ * incoming request's own origin. Behind App Hosting's proxy (Cloud Run),
+ * a request's `url`/origin as Next.js sees it reflects the container's
+ * internal bind address (0.0.0.0:8080), not the public hostname, which
+ * sent the OAuth callback's post-consent redirect to an unreachable
+ * address. This env var is the one place that's actually reliable.
+ */
+export function appBaseUrl(): string {
   const base = process.env.GOOGLE_OAUTH_REDIRECT_BASE_URL;
   if (!base) throw new Error("GOOGLE_OAUTH_REDIRECT_BASE_URL is not set");
-  return `${base.replace(/\/$/, "")}/api/google/callback`;
+  return base.replace(/\/$/, "");
+}
+
+function redirectUri() {
+  return `${appBaseUrl()}/api/google/callback`;
 }
 
 export function createOAuthClient() {
