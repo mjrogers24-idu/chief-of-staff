@@ -36,7 +36,7 @@ env:
   # NEXT_PUBLIC_ vars into the client bundle), so notifications stay
   # disabled ("misconfigured") until this is filled in and redeployed.
   - variable: NEXT_PUBLIC_FIREBASE_VAPID_KEY
-    value: ""
+    value: "BITrmX1rKkTcg3eDJgU-Dh6bffXljwM55qaKLLNKJlZeB6cOxpc7KXgJBHDNiDijGJnPCfDwRSrGyBb8mhl7Yxs"
     availability: [BUILD, RUNTIME]
 
   # Backend "chief-of-staff", assigned once the App Hosting backend was
