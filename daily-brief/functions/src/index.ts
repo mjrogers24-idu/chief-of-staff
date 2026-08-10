@@ -31,6 +31,7 @@ export { listCalendars } from "./listCalendars";
 export { parseBrainDump } from "./parseBrainDump";
 export { parseCalendarUpload } from "./parseCalendarUpload";
 export { parseRecipeUpload } from "./parseRecipeUpload";
+export { prioritizeTasks } from "./prioritizeTasks";
 export { scanInboxFollowUps } from "./scanInboxFollowUps";
 
 initializeApp();

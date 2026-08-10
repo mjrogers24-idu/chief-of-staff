@@ -3,11 +3,13 @@ import {
   collection,
   deleteDoc,
   doc,
+  getDocs,
   onSnapshot,
   orderBy,
   query,
   serverTimestamp,
   updateDoc,
+  where,
   type Timestamp,
 } from "firebase/firestore";
 import { db } from "@/lib/firebase";
@@ -41,6 +43,13 @@ export function subscribeOpenTasks(
     (snapshot) => onChange(snapshot.docs.map((d) => ({ id: d.id, ...d.data() }) as OpenTask)),
     onError,
   );
+}
+
+/** One-off (not live) fetch of not-done tasks — used by the "prioritize my list" chat action. */
+export async function fetchOpenTasks(): Promise<OpenTask[]> {
+  const q = query(taskCollection(), where("done", "==", false), orderBy("dueDate"));
+  const snapshot = await getDocs(q);
+  return snapshot.docs.map((d) => ({ id: d.id, ...d.data() }) as OpenTask);
 }
 
 export function addOpenTask(input: OpenTaskInput) {

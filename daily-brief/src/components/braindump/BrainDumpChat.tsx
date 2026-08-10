@@ -1,22 +1,27 @@
 "use client";
 
-import { Send, X } from "lucide-react";
+import { ListOrdered, Send, X } from "lucide-react";
 import { useEffect, useRef, useState } from "react";
 import { useAuth } from "@/lib/auth-context";
 import { parseBrainDump, type MealProposal, type ReviewEventProposal, type TaskProposal } from "@/lib/brainDump";
 import { defaultCalendarIdFor, listCalendars, type CalendarListEntry } from "@/lib/calendars";
+import { fetchOpenTasks } from "@/lib/firestore/openTasks";
+import { prioritizeTasks } from "@/lib/prioritize";
 import { BrainDumpReview } from "./BrainDumpReview";
 
 const PLACEHOLDER = "Type a message…";
 const MAX_TEXTAREA_HEIGHT = 128;
 
-interface Turn {
-  id: number;
-  text: string;
-  tasks: TaskProposal[];
-  events: ReviewEventProposal[];
-  meals: MealProposal[];
-}
+type Turn =
+  | {
+      kind: "braindump";
+      id: number;
+      text: string;
+      tasks: TaskProposal[];
+      events: ReviewEventProposal[];
+      meals: MealProposal[];
+    }
+  | { kind: "reply"; id: number; text: string; reply: string };
 
 function firstName(displayName?: string | null): string | null {
   const first = displayName?.trim().split(/\s+/)[0];
@@ -33,6 +38,7 @@ export function BrainDumpChat() {
   const [turns, setTurns] = useState<Turn[]>([]);
   const [nextId, setNextId] = useState(1);
   const [calendars, setCalendars] = useState<CalendarListEntry[]>([]);
+  const [prioritizing, setPrioritizing] = useState(false);
   const textareaRef = useRef<HTMLTextAreaElement>(null);
   const bottomRef = useRef<HTMLDivElement>(null);
 
@@ -70,7 +76,7 @@ export function BrainDumpChat() {
       }));
       setTurns((prev) => [
         ...prev,
-        { id: nextId, text: submittedText, tasks: proposals.tasks, events, meals: proposals.meals },
+        { kind: "braindump", id: nextId, text: submittedText, tasks: proposals.tasks, events, meals: proposals.meals },
       ]);
       setNextId((n) => n + 1);
       setText("");
@@ -86,6 +92,25 @@ export function BrainDumpChat() {
     if (e.key === "Enter" && !e.shiftKey) {
       e.preventDefault();
       handleSubmit();
+    }
+  }
+
+  async function handlePrioritize() {
+    if (prioritizing) return;
+    setPrioritizing(true);
+    setError(null);
+    try {
+      const openTasks = await fetchOpenTasks();
+      const reply =
+        openTasks.length === 0
+          ? "Your task list is empty — nothing to prioritize!"
+          : await prioritizeTasks(openTasks.map((t) => ({ title: t.title, dueDate: t.dueDate })));
+      setTurns((prev) => [...prev, { kind: "reply", id: nextId, text: "Prioritize my tasks", reply }]);
+      setNextId((n) => n + 1);
+    } catch {
+      setError("Couldn't work through your list. Try again.");
+    } finally {
+      setPrioritizing(false);
     }
   }
 
@@ -112,11 +137,28 @@ export function BrainDumpChat() {
               <X size={14} />
             </button>
           </div>
-          <BrainDumpReview tasks={turn.tasks} events={turn.events} meals={turn.meals} calendars={calendars} />
+          {turn.kind === "braindump" ? (
+            <BrainDumpReview tasks={turn.tasks} events={turn.events} meals={turn.meals} calendars={calendars} />
+          ) : (
+            <div className="flex items-start gap-1.5">
+              <p className="max-w-[85%] whitespace-pre-line rounded-2xl rounded-tl-sm bg-gray-100 px-3 py-2 text-sm text-gray-700 dark:bg-gray-700 dark:text-gray-200">
+                {turn.reply}
+              </p>
+            </div>
+          )}
         </div>
       ))}
 
       {error && <p className="text-sm text-red-600 dark:text-red-400">{error}</p>}
+
+      <button
+        onClick={handlePrioritize}
+        disabled={prioritizing}
+        className="flex items-center gap-1.5 self-start rounded-full border border-gray-200 px-3 py-1.5 text-xs font-medium text-gray-600 hover:bg-gray-50 disabled:opacity-50 dark:border-gray-700 dark:text-gray-300 dark:hover:bg-gray-800"
+      >
+        <ListOrdered size={13} />
+        {prioritizing ? "Thinking…" : "Prioritize my tasks"}
+      </button>
 
       <div className="flex items-end gap-2 rounded-2xl border border-gray-200 bg-white p-1.5 dark:border-gray-700 dark:bg-gray-800">
         <textarea
