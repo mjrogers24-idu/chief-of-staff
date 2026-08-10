@@ -30,8 +30,11 @@ interface SectionProps<T> {
 function ProposalSection<T>({ icon: Icon, title, items: initialItems, renderFields, confirm, disabledReason }: SectionProps<T>) {
   const [items, setItems] = useState(initialItems.map((item, i) => ({ id: i, item, error: null as string | null })));
   const [busyId, setBusyId] = useState<number | null>(null);
+  const [addingAll, setAddingAll] = useState(false);
 
   if (items.length === 0) return null;
+
+  const addableCount = items.filter((row) => !disabledReason?.(row.item)).length;
 
   function update(id: number, patch: Partial<T>) {
     setItems((prev) => prev.map((row) => (row.id === id ? { ...row, item: { ...row.item, ...patch } } : row)));
@@ -49,15 +52,35 @@ function ProposalSection<T>({ icon: Icon, title, items: initialItems, renderFiel
     }
   }
 
+  async function handleAddAll() {
+    setAddingAll(true);
+    for (const row of items) {
+      if (disabledReason?.(row.item)) continue;
+      await handleConfirm(row.id, row.item);
+    }
+    setAddingAll(false);
+  }
+
   return (
     <div className="flex flex-col gap-3 rounded-2xl border border-brand-100 bg-brand-50 p-4 dark:border-brand-900 dark:bg-brand-900/20">
-      <div className="flex items-center gap-2">
-        <span className="flex h-8 w-8 items-center justify-center rounded-full bg-brand-100 text-brand-600 dark:bg-brand-900/40 dark:text-brand-300">
-          <Icon size={16} strokeWidth={2.25} />
-        </span>
-        <h3 className="text-sm font-semibold text-brand-900 dark:text-brand-200">
-          {title} ({items.length})
-        </h3>
+      <div className="flex items-center justify-between gap-2">
+        <div className="flex items-center gap-2">
+          <span className="flex h-8 w-8 items-center justify-center rounded-full bg-brand-100 text-brand-600 dark:bg-brand-900/40 dark:text-brand-300">
+            <Icon size={16} strokeWidth={2.25} />
+          </span>
+          <h3 className="text-sm font-semibold text-brand-900 dark:text-brand-200">
+            {title} ({items.length})
+          </h3>
+        </div>
+        {addableCount > 1 && (
+          <button
+            onClick={handleAddAll}
+            disabled={addingAll || busyId !== null}
+            className="text-xs font-medium text-brand-700 underline disabled:opacity-50 dark:text-brand-300"
+          >
+            {addingAll ? "Adding…" : "Add all"}
+          </button>
+        )}
       </div>
       <div className="flex flex-col gap-2">
         {items.map(({ id, item, error }) => {
@@ -70,14 +93,14 @@ function ProposalSection<T>({ icon: Icon, title, items: initialItems, renderFiel
               <div className="mt-2 flex gap-3">
                 <button
                   onClick={() => handleConfirm(id, item)}
-                  disabled={busyId === id || !!blocked}
+                  disabled={busyId === id || !!blocked || addingAll}
                   className="text-xs font-medium text-brand-600 underline disabled:opacity-50 dark:text-brand-400"
                 >
                   {busyId === id ? "Saving…" : "Add"}
                 </button>
                 <button
                   onClick={() => setItems((prev) => prev.filter((row) => row.id !== id))}
-                  disabled={busyId === id}
+                  disabled={busyId === id || addingAll}
                   className="text-xs text-gray-500 underline disabled:opacity-50 dark:text-gray-400"
                 >
                   Discard
